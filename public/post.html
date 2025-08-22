@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title id="pageTitle">Loading... - Right To Digital</title>
+    <meta name="description" id="pageDescription" content="Loading case study...">
+    <meta name="author" content="Right To Digital">
+    
+    <!-- Open Graph -->
+    <meta property="og:title" id="ogTitle" content="Loading... - Right To Digital">
+    <meta property="og:description" id="ogDescription" content="Loading case study...">
+    <meta property="og:type" content="article">
+    <meta property="og:url" id="ogUrl" content="">
+    <meta property="og:image" id="ogImage" content="">
+    
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" id="twitterTitle" content="Loading... - Right To Digital">
+    <meta name="twitter:description" id="twitterDescription" content="Loading case study...">
+    <meta name="twitter:image" id="twitterImage" content="">
+    
+    <!-- Canonical URL -->
+    <link rel="canonical" id="canonicalUrl" href="">
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=EB+Garamond:wght@400;600;700;800&family=Open+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Styles -->
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/post.css">
+    
+    <!-- JSON-LD Structured Data -->
+    <script type="application/ld+json" id="structuredData">
+    {
+        "@context": "https://schema.org",
+        "@type": "Article",
+        "headline": "Loading...",
+        "description": "Loading case study...",
+        "author": {
+            "@type": "Person",
+            "name": "Right To Digital"
+        },
+        "publisher": {
+            "@type": "Organization",
+            "name": "Right To Digital",
+            "logo": {
+                "@type": "ImageObject",
+                "url": "https://api.builder.io/api/v1/image/assets/TEMP/4ecf8c9ad2d29eaf835b6b440391b07abb6d57ef?width=225"
+            }
+        },
+        "datePublished": "",
+        "dateModified": "",
+        "image": "",
+        "url": ""
+    }
+    </script>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <nav class="nav">
+            <div class="nav-container">
+                <div class="logo-container">
+                    <a href="/" class="logo-link">
+                        <img src="https://api.builder.io/api/v1/image/assets/TEMP/4ecf8c9ad2d29eaf835b6b440391b07abb6d57ef?width=225" alt="Right To Digital Logo" class="logo">
+                    </a>
+                </div>
+                <div class="nav-menu desktop-only">
+                    <a href="/about.html" class="nav-link">About</a>
+                    <a href="/services.html" class="nav-link">Services</a>
+                    <a href="/" class="nav-link">Case Studies</a>
+                    <a href="/contact.html" class="nav-link">Contact</a>
+                </div>
+                <div class="nav-cta desktop-only">
+                    <button class="btn btn-hero" onclick="window.location.href='/contact.html'">Get Started</button>
+                </div>
+                <button class="mobile-menu-btn mobile-only" id="mobileMenuToggle" aria-label="Toggle mobile menu">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="menu-icon">
+                        <line x1="4" x2="20" y1="12" y2="12"></line>
+                        <line x1="4" x2="20" y1="6" y2="6"></line>
+                        <line x1="4" x2="20" y1="18" y2="18"></line>
+                    </svg>
+                </button>
+            </div>
+        </nav>
+
+        <!-- Mobile Menu -->
+        <div class="mobile-menu" id="mobileMenu">
+            <div class="mobile-menu-content">
+                <a href="/about.html" class="mobile-menu-link">About</a>
+                <a href="/services.html" class="mobile-menu-link">Services</a>
+                <a href="/" class="mobile-menu-link">Case Studies</a>
+                <a href="/contact.html" class="mobile-menu-link">Contact</a>
+                <div class="mobile-menu-cta">
+                    <button class="btn btn-hero" onclick="window.location.href='/contact.html'">Get Started</button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main">
+        <!-- Loading State -->
+        <div id="loadingState" class="loading-container">
+            <div class="loading-spinner"></div>
+            <p>Loading case study...</p>
+        </div>
+
+        <!-- Error State -->
+        <div id="errorState" class="error-container" style="display: none;">
+            <div class="error-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="15" x2="9" y1="9" y2="15"></line>
+                    <line x1="9" x2="15" y1="9" y2="15"></line>
+                </svg>
+            </div>
+            <h1>Case Study Not Found</h1>
+            <p>The case study you're looking for doesn't exist or has been removed.</p>
+            <a href="/" class="btn btn-cta">Back to Case Studies</a>
+        </div>
+
+        <!-- Post Content -->
+        <article id="postContent" class="post-article" style="display: none;">
+            <!-- Breadcrumb -->
+            <nav class="breadcrumb" aria-label="Breadcrumb">
+                <div class="container">
+                    <ol class="breadcrumb-list">
+                        <li><a href="/">Home</a></li>
+                        <li><a href="/">Case Studies</a></li>
+                        <li id="breadcrumbCategory">Loading...</li>
+                    </ol>
+                </div>
+            </nav>
+
+            <!-- Hero Section -->
+            <section class="post-hero">
+                <div class="container">
+                    <div class="post-hero-content">
+                        <h1 id="postTitle" class="post-title">Loading...</h1>
+                        <div id="postBanner" class="post-banner">
+                            <!-- Banner image will be inserted here -->
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Article Body -->
+            <section class="post-body">
+                <div class="container">
+                    <div class="post-layout">
+                        <!-- Main Content -->
+                        <div class="post-main">
+                            <!-- Article Header -->
+                            <header class="article-header">
+                                <div class="author-info">
+                                    <div id="authorAvatar" class="author-avatar-container">
+                                        <!-- Author avatar will be inserted here -->
+                                    </div>
+                                    <div class="author-details">
+                                        <span id="authorName" class="author-name">Loading...</span>
+                                        <span id="publishedDate" class="published-date">Loading...</span>
+                                    </div>
+                                </div>
+                                <div class="post-meta-info">
+                                    <div class="post-badges">
+                                        <span id="contentTypeBadge" class="post-badge content-type">Loading...</span>
+                                        <span id="serviceCategoryBadge" class="post-badge service-category">Loading...</span>
+                                    </div>
+                                    <div class="post-stats">
+                                        <div class="post-views">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                                <circle cx="12" cy="12" r="3"></circle>
+                                            </svg>
+                                            <span id="postViews">0</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </header>
+
+                            <!-- Article Content -->
+                            <div id="articleContent" class="article-content">
+                                <!-- Content will be inserted here -->
+                            </div>
+                        </div>
+
+                        <!-- Sidebar -->
+                        <aside class="post-sidebar">
+                            <!-- Search Widget -->
+                            <div class="sidebar-widget">
+                                <h3 class="widget-title">Search</h3>
+                                <div class="search-widget">
+                                    <input type="text" id="sidebarSearch" placeholder="Type something..." class="search-input">
+                                    <button class="search-btn" aria-label="Search">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <circle cx="11" cy="11" r="8"></circle>
+                                            <path d="m21 21-4.35-4.35"></path>
+                                        </svg>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Popular Posts Widget -->
+                            <div class="sidebar-widget">
+                                <h3 class="widget-title">Popular Posts</h3>
+                                <div id="popularPosts" class="popular-posts">
+                                    <!-- Popular posts will be loaded here -->
+                                </div>
+                            </div>
+
+                            <!-- Contact Widget -->
+                            <div class="sidebar-widget">
+                                <h3 class="widget-title">Contact Us</h3>
+                                <form id="sidebarContactForm" class="contact-widget">
+                                    <div class="form-group">
+                                        <input type="text" name="name" placeholder="Name *" required class="form-input">
+                                    </div>
+                                    <div class="form-group">
+                                        <input type="email" name="email" placeholder="Email *" required class="form-input">
+                                    </div>
+                                    <div class="form-group">
+                                        <input type="tel" name="phone" placeholder="Phone" class="form-input">
+                                    </div>
+                                    <div class="form-group">
+                                        <textarea name="message" placeholder="Message *" required class="form-textarea" rows="4"></textarea>
+                                    </div>
+                                    <button type="submit" class="btn btn-submit">
+                                        <span class="btn-text">Send Message</span>
+                                        <div class="btn-spinner" style="display: none;">
+                                            <div class="spinner"></div>
+                                        </div>
+                                    </button>
+                                </form>
+                            </div>
+
+                            <!-- Social Media Widget -->
+                            <div class="sidebar-widget">
+                                <h3 class="widget-title">Social Media</h3>
+                                <div id="socialMedia" class="social-media-widget">
+                                    <!-- Social links will be populated here -->
+                                </div>
+                            </div>
+                        </aside>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Author Section -->
+            <section id="authorSection" class="author-section">
+                <div class="container">
+                    <div class="author-card">
+                        <div class="author-info-detailed">
+                            <div id="authorAvatarLarge" class="author-avatar-large">
+                                <!-- Large author avatar will be inserted here -->
+                            </div>
+                            <div class="author-content">
+                                <h2 id="authorSectionTitle" class="author-section-title">About Author</h2>
+                                <h3 id="authorFullName" class="author-full-name">Loading...</h3>
+                                <p id="authorBio" class="author-bio">Loading...</p>
+                                <div id="authorSocial" class="author-social">
+                                    <!-- Author social links will be inserted here -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Related Posts Section -->
+            <section id="relatedSection" class="related-section">
+                <div class="container">
+                    <h2 class="section-title">Related Case Studies</h2>
+                    <div id="relatedPosts" class="related-posts-grid">
+                        <!-- Related posts will be loaded here -->
+                    </div>
+                </div>
+            </section>
+        </article>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="footer-container">
+            <div class="footer-content">
+                <div class="footer-grid">
+                    <div class="footer-brand">
+                        <div class="footer-logo">
+                            <img src="https://api.builder.io/api/v1/image/assets/TEMP/4ecf8c9ad2d29eaf835b6b440391b07abb6d57ef?width=225" alt="Right To Digital" class="footer-logo-img">
+                        </div>
+                        <p class="footer-description">Lorem ipsum dolor sit amet consectetur adipiscing elit aliquam</p>
+                        <div class="footer-social">
+                            <a href="#" class="social-btn">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"></path>
+                                </svg>
+                            </a>
+                            <a href="#" class="social-btn">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M22 4s-.7 2.1-2 3.4c1.6 10-9.4 17.3-18 11.6 2.2.1 4.4-.6 6-2C3 15.5.5 9.6 3 5c2.2 2.6 5.6 4.1 9 4-.9-4.2 4-6.6 7-3.8 1.1 0 3-1.2 3-1.2z"></path>
+                                </svg>
+                            </a>
+                            <a href="#" class="social-btn">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <rect width="20" height="20" x="2" y="2" rx="5" ry="5"></rect>
+                                    <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path>
+                                    <line x1="17.5" x2="17.51" y1="6.5" y2="6.5"></line>
+                                </svg>
+                            </a>
+                            <a href="#" class="social-btn">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"></path>
+                                    <rect width="4" height="12" x="2" y="9"></rect>
+                                    <circle cx="4" cy="4" r="2"></circle>
+                                </svg>
+                            </a>
+                            <a href="#" class="social-btn">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M2.5 17a24.12 24.12 0 0 1 0-10 2 2 0 0 1 1.4-1.4 49.56 49.56 0 0 1 16.2 0A2 2 0 0 1 21.5 7a24.12 24.12 0 0 1 0 10 2 2 0 0 1-1.4 1.4 49.55 49.55 0 0 1-16.2 0A2 2 0 0 1 2.5 17"></path>
+                                    <path d="m10 15 5-3-5-3z"></path>
+                                </svg>
+                            </a>
+                        </div>
+                    </div>
+
+                    <div class="footer-column">
+                        <h3 class="footer-heading">Product</h3>
+                        <ul class="footer-links">
+                            <li><a href="#" class="footer-link">Features</a></li>
+                            <li><a href="#" class="footer-link">Pricing</a></li>
+                            <li><a href="/" class="footer-link">Case studies</a></li>
+                            <li><a href="#" class="footer-link">Reviews</a></li>
+                            <li><a href="#" class="footer-link">Updates</a></li>
+                        </ul>
+                    </div>
+
+                    <div class="footer-column">
+                        <h3 class="footer-heading">Company</h3>
+                        <ul class="footer-links">
+                            <li><a href="/about.html" class="footer-link">About</a></li>
+                            <li><a href="/contact.html" class="footer-link">Contact us</a></li>
+                            <li><a href="#" class="footer-link">Blog</a></li>
+                        </ul>
+                    </div>
+
+                    <div class="footer-column">
+                        <h3 class="footer-heading">Support</h3>
+                        <ul class="footer-links footer-support">
+                            <li><a href="#" class="footer-link">Getting started</a></li>
+                            <li><a href="#" class="footer-link">Help center</a></li>
+                        </ul>
+                        
+                        <h3 class="footer-heading contact-heading">Contact us</h3>
+                        <div class="footer-contact">
+                            <p>✉ contact@company.com</p>
+                            <p>📞 (414) 687 - 5892</p>
+                            <p>📍 794 Mcallister St<br>San Francisco, 94102</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="footer-bottom">
+                    <p class="footer-copyright">Copyright © 2025 RTD</p>
+                    <div class="footer-legal">
+                        <span>All Rights Reserved</span>
+                        <a href="#" class="footer-legal-link">Terms and Conditions</a>
+                        <a href="#" class="footer-legal-link">Privacy Policy</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Toast Container -->
+    <div id="toast-container" class="toast-container"></div>
+
+    <!-- Scripts -->
+    <script src="/js/script.js"></script>
+    <script src="/js/post.js"></script>
+</body>
+</html>

@@ -1,0 +1,709 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - Case Studies CMS</title>
+    <meta name="description" content="Admin dashboard for managing case studies, authors, and content">
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=EB+Garamond:wght@400;600;700;800&family=Open+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Styles -->
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/admin/css/admin.css">
+</head>
+<body>
+    <!-- Login Screen -->
+    <div id="loginScreen" class="login-screen">
+        <div class="login-container">
+            <div class="login-card">
+                <div class="login-header">
+                    <img src="https://api.builder.io/api/v1/image/assets/TEMP/4ecf8c9ad2d29eaf835b6b440391b07abb6d57ef?width=225" alt="Right To Digital" class="login-logo">
+                    <h1 class="login-title">Admin Dashboard</h1>
+                    <p class="login-subtitle">Sign in to manage your content</p>
+                </div>
+                
+                <form id="loginForm" class="login-form">
+                    <div class="form-group">
+                        <label for="username" class="form-label">Username</label>
+                        <input type="text" id="username" name="username" class="form-input" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="password" class="form-label">Password</label>
+                        <input type="password" id="password" name="password" class="form-input" required>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary btn-full">
+                        <span class="btn-text">Sign In</span>
+                        <div class="btn-spinner" style="display: none;">
+                            <div class="spinner"></div>
+                        </div>
+                    </button>
+                </form>
+                
+                <div class="login-footer">
+                    <a href="/" class="login-link">← Back to Website</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Dashboard -->
+    <div id="dashboard" class="dashboard" style="display: none;">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <img src="https://api.builder.io/api/v1/image/assets/TEMP/4ecf8c9ad2d29eaf835b6b440391b07abb6d57ef?width=225" alt="Right To Digital" class="sidebar-logo">
+                <h2 class="sidebar-title">CMS Dashboard</h2>
+            </div>
+            
+            <nav class="sidebar-nav">
+                <a href="#posts" class="nav-item active" data-section="posts">
+                    <svg class="nav-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                        <polyline points="14,2 14,8 20,8"></polyline>
+                        <line x1="16" x2="8" y1="13" y2="13"></line>
+                        <line x1="16" x2="8" y1="17" y2="17"></line>
+                        <polyline points="10,9 9,9 8,9"></polyline>
+                    </svg>
+                    Posts
+                </a>
+                
+                <a href="#authors" class="nav-item" data-section="authors" id="authorsNavItem">
+                    <svg class="nav-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
+                        <circle cx="9" cy="7" r="4"></circle>
+                        <path d="M22 21v-2a4 4 0 0 0-3-3.87"></path>
+                        <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                    </svg>
+                    Authors
+                </a>
+                
+                <a href="#inbox" class="nav-item" data-section="inbox">
+                    <svg class="nav-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M22 12h-6l-2 3h-4l-2-3H2"></path>
+                        <path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"></path>
+                    </svg>
+                    Inbox
+                </a>
+                
+                <a href="#settings" class="nav-item" data-section="settings" id="settingsNavItem">
+                    <svg class="nav-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="3"></circle>
+                        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1 1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+                    </svg>
+                    Settings
+                </a>
+            </nav>
+            
+            <div class="sidebar-footer">
+                <div class="user-info" id="userInfo">
+                    <div class="user-avatar">
+                        <img id="userAvatar" src="" alt="User Avatar" style="display: none;">
+                        <div id="userInitials" class="user-initials"></div>
+                    </div>
+                    <div class="user-details">
+                        <div id="userName" class="user-name"></div>
+                        <div id="userRole" class="user-role"></div>
+                    </div>
+                </div>
+                <button id="logoutBtn" class="btn btn-ghost btn-sm">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                        <polyline points="16,17 21,12 16,7"></polyline>
+                        <line x1="21" x2="9" y1="12" y2="12"></line>
+                    </svg>
+                    Logout
+                </button>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Header -->
+            <header class="dashboard-header">
+                <div class="header-content">
+                    <h1 id="pageTitle" class="page-title">Posts</h1>
+                    <div class="header-actions">
+                        <button id="newPostBtn" class="btn btn-primary" style="display: none;">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <line x1="12" x2="12" y1="5" y2="19"></line>
+                                <line x1="5" x2="19" y1="12" y2="12"></line>
+                            </svg>
+                            New Post
+                        </button>
+                        <button id="newAuthorBtn" class="btn btn-primary" style="display: none;">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <line x1="12" x2="12" y1="5" y2="19"></line>
+                                <line x1="5" x2="19" y1="12" y2="12"></line>
+                            </svg>
+                            New Author
+                        </button>
+                        <a href="/" class="btn btn-ghost">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+                                <polyline points="15,3 21,3 21,9"></polyline>
+                                <line x1="10" x2="21" y1="14" y2="3"></line>
+                            </svg>
+                            View Site
+                        </a>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Content Sections -->
+            <div class="content-wrapper">
+                <!-- Posts Section -->
+                <section id="postsSection" class="content-section active">
+                    <div class="section-header">
+                        <div class="section-filters">
+                            <div class="filter-group">
+                                <input type="text" id="postsSearch" placeholder="Search posts..." class="search-input">
+                            </div>
+                            <div class="filter-group">
+                                <select id="statusFilter" class="filter-select">
+                                    <option value="">All Status</option>
+                                    <option value="draft">Draft</option>
+                                    <option value="pending_approval">Pending Approval</option>
+                                    <option value="approved">Approved</option>
+                                    <option value="rejected">Rejected</option>
+                                </select>
+                            </div>
+                            <div class="filter-group">
+                                <select id="contentTypeFilter" class="filter-select">
+                                    <option value="">All Content Types</option>
+                                    <option value="Blog Posts">Blog Posts</option>
+                                    <option value="Case Studies">Case Studies</option>
+                                    <option value="User Interview">User Interview</option>
+                                    <option value="Quantitative Research">Quantitative Research</option>
+                                    <option value="Competitors Research">Competitors Research</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="table-container">
+                        <table class="data-table" id="postsTable">
+                            <thead>
+                                <tr>
+                                    <th>Title</th>
+                                    <th>Author</th>
+                                    <th>Status</th>
+                                    <th>Type</th>
+                                    <th>Views</th>
+                                    <th>Updated</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="postsTableBody">
+                                <!-- Posts will be loaded here -->
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <div id="postsLoading" class="loading-state">
+                        <div class="loading-spinner"></div>
+                        <p>Loading posts...</p>
+                    </div>
+                    
+                    <div id="postsEmpty" class="empty-state" style="display: none;">
+                        <div class="empty-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                <polyline points="14,2 14,8 20,8"></polyline>
+                            </svg>
+                        </div>
+                        <h3>No posts found</h3>
+                        <p>Create your first post to get started</p>
+                    </div>
+                </section>
+
+                <!-- Authors Section -->
+                <section id="authorsSection" class="content-section">
+                    <div class="section-header">
+                        <div class="section-filters">
+                            <div class="filter-group">
+                                <input type="text" id="authorsSearch" placeholder="Search authors..." class="search-input">
+                            </div>
+                            <div class="filter-group">
+                                <select id="roleFilter" class="filter-select">
+                                    <option value="">All Roles</option>
+                                    <option value="admin">Admin</option>
+                                    <option value="author">Author</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="table-container">
+                        <table class="data-table" id="authorsTable">
+                            <thead>
+                                <tr>
+                                    <th>Author</th>
+                                    <th>Username</th>
+                                    <th>Role</th>
+                                    <th>Posts</th>
+                                    <th>Status</th>
+                                    <th>Created</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="authorsTableBody">
+                                <!-- Authors will be loaded here -->
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <div id="authorsLoading" class="loading-state">
+                        <div class="loading-spinner"></div>
+                        <p>Loading authors...</p>
+                    </div>
+                </section>
+
+                <!-- Inbox Section -->
+                <section id="inboxSection" class="content-section">
+                    <div class="table-container">
+                        <table class="data-table" id="inboxTable">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Email</th>
+                                    <th>Phone</th>
+                                    <th>Message</th>
+                                    <th>Submitted</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="inboxTableBody">
+                                <!-- Inbox items will be loaded here -->
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <div id="inboxLoading" class="loading-state">
+                        <div class="loading-spinner"></div>
+                        <p>Loading inbox...</p>
+                    </div>
+                    
+                    <div id="inboxEmpty" class="empty-state" style="display: none;">
+                        <div class="empty-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M22 12h-6l-2 3h-4l-2-3H2"></path>
+                                <path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"></path>
+                            </svg>
+                        </div>
+                        <h3>No messages</h3>
+                        <p>Contact form submissions will appear here</p>
+                    </div>
+                </section>
+
+                <!-- Settings Section -->
+                <section id="settingsSection" class="content-section">
+                    <div class="settings-grid">
+                        <div class="settings-card">
+                            <h3 class="settings-title">Popular Posts</h3>
+                            <p class="settings-description">Select up to 5 posts to feature in the sidebar</p>
+                            <div id="popularPostsSettings" class="popular-posts-settings">
+                                <!-- Popular posts settings will be loaded here -->
+                            </div>
+                        </div>
+                        
+                        <div class="settings-card">
+                            <h3 class="settings-title">Site Settings</h3>
+                            <form id="siteSettingsForm" class="settings-form">
+                                <div class="form-group">
+                                    <label class="form-label">Site Title</label>
+                                    <input type="text" name="title" class="form-input" value="Right To Digital - Case Studies">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Site Description</label>
+                                    <textarea name="description" class="form-textarea" rows="3">Discover how we engineer growth for D2C brands through data-driven strategies and proven methodologies.</textarea>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Contact Email</label>
+                                    <input type="email" name="contactEmail" class="form-input" value="contact@righttodigi.com">
+                                </div>
+                                <button type="submit" class="btn btn-primary">Save Settings</button>
+                            </form>
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </main>
+    </div>
+
+    <!-- Post Editor Modal -->
+    <div id="postEditorModal" class="modal-overlay" style="display: none;">
+        <div class="modal-content modal-large">
+            <div class="modal-header">
+                <h2 id="editorTitle" class="modal-title">New Post</h2>
+                <button id="closeEditorBtn" class="modal-close">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="18" x2="6" y1="6" y2="18"></line>
+                        <line x1="6" x2="18" y1="6" y2="18"></line>
+                    </svg>
+                </button>
+            </div>
+            
+            <form id="postEditorForm" class="post-editor-form">
+                <div class="editor-tabs">
+                    <button type="button" class="tab-btn active" data-tab="content">Content</button>
+                    <button type="button" class="tab-btn" data-tab="settings">Settings</button>
+                    <button type="button" class="tab-btn" data-tab="seo">SEO</button>
+                </div>
+                
+                <!-- Content Tab -->
+                <div id="contentTab" class="tab-content active">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Title *</label>
+                            <input type="text" name="title" class="form-input" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Slug</label>
+                            <input type="text" name="slug" class="form-input" placeholder="Auto-generated from title">
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Excerpt *</label>
+                        <textarea name="excerpt" class="form-textarea" rows="3" required placeholder="Brief description of the post..."></textarea>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Banner URL *</label>
+                            <input type="url" name="bannerUrl" class="form-input" required placeholder="https://example.com/image.jpg">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Banner Alt Text *</label>
+                            <input type="text" name="bannerAlt" class="form-input" required placeholder="Descriptive alt text">
+                        </div>
+                    </div>
+                    
+                    <div class="template-selector">
+                        <label class="form-label">Template Mode</label>
+                        <div class="radio-group">
+                            <label class="radio-label">
+                                <input type="radio" name="templateMode" value="default" checked>
+                                <span class="radio-custom"></span>
+                                Default Template
+                            </label>
+                            <label class="radio-label">
+                                <input type="radio" name="templateMode" value="custom">
+                                <span class="radio-custom"></span>
+                                Custom Template
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <!-- Default Template Fields -->
+                    <div id="defaultTemplateFields" class="template-fields">
+                        <div class="form-group">
+                            <label class="form-label">Content *</label>
+                            <div class="editor-toolbar">
+                                <button type="button" class="toolbar-btn" data-command="bold" title="Bold">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M6 4h8a4 4 0 0 1 4 4 4 4 0 0 1-4 4H6z"></path>
+                                        <path d="M6 12h9a4 4 0 0 1 4 4 4 4 0 0 1-4 4H6z"></path>
+                                    </svg>
+                                </button>
+                                <button type="button" class="toolbar-btn" data-command="italic" title="Italic">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <line x1="19" x2="10" y1="4" y2="4"></line>
+                                        <line x1="14" x2="5" y1="20" y2="20"></line>
+                                        <line x1="15" x2="9" y1="4" y2="20"></line>
+                                    </svg>
+                                </button>
+                                <button type="button" class="toolbar-btn" data-command="underline" title="Underline">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M6 4v6a6 6 0 0 0 12 0V4"></path>
+                                        <line x1="4" x2="20" y1="20" y2="20"></line>
+                                    </svg>
+                                </button>
+                                <div class="toolbar-divider"></div>
+                                <button type="button" class="toolbar-btn" data-command="formatBlock" data-value="h2" title="Heading 2">H2</button>
+                                <button type="button" class="toolbar-btn" data-command="formatBlock" data-value="h3" title="Heading 3">H3</button>
+                                <div class="toolbar-divider"></div>
+                                <button type="button" class="toolbar-btn" data-command="insertUnorderedList" title="Bullet List">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <line x1="8" x2="21" y1="6" y2="6"></line>
+                                        <line x1="8" x2="21" y1="12" y2="12"></line>
+                                        <line x1="8" x2="21" y1="18" y2="18"></line>
+                                        <line x1="3" x2="3.01" y1="6" y2="6"></line>
+                                        <line x1="3" x2="3.01" y1="12" y2="12"></line>
+                                        <line x1="3" x2="3.01" y1="18" y2="18"></line>
+                                    </svg>
+                                </button>
+                                <button type="button" class="toolbar-btn" data-command="insertOrderedList" title="Numbered List">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <line x1="10" x2="21" y1="6" y2="6"></line>
+                                        <line x1="10" x2="21" y1="12" y2="12"></line>
+                                        <line x1="10" x2="21" y1="18" y2="18"></line>
+                                        <path d="M4 6h1v4"></path>
+                                        <path d="M4 10h2"></path>
+                                        <path d="M6 18H4c0-1 2-2 2-3s-1-1.5-2-1"></path>
+                                    </svg>
+                                </button>
+                                <div class="toolbar-divider"></div>
+                                <button type="button" class="toolbar-btn" data-command="createLink" title="Link">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
+                                        <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
+                                    </svg>
+                                </button>
+                                <button type="button" class="toolbar-btn" data-command="insertHTML" data-value="<blockquote><p></p></blockquote>" title="Quote">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M3 21c3 0 7-1 7-8V5c0-1.25-.756-2.017-2-2H4c-1.25 0-2 .75-2 1.972V11c0 1.25.75 2 2 2 1 0 1 0 1 1v1c0 1-1 2-2 2s-1 .008-1 1.031V20c0 1 0 1 1 1z"></path>
+                                        <path d="M15 21c3 0 7-1 7-8V5c0-1.25-.757-2.017-2-2h-4c-1.25 0-2 .75-2 1.972V11c0 1.25.75 2 2 2h.75c0 2.25.25 4-2.75 4v3c0 1 0 1 1 1z"></path>
+                                    </svg>
+                                </button>
+                            </div>
+                            <div id="contentEditor" class="content-editor" contenteditable="true" placeholder="Start writing your post content..."></div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label">Pull Quotes</label>
+                            <div id="pullQuotesContainer" class="pull-quotes-container">
+                                <!-- Pull quotes will be added here -->
+                            </div>
+                            <button type="button" id="addPullQuoteBtn" class="btn btn-ghost btn-sm">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <line x1="12" x2="12" y1="5" y2="19"></line>
+                                    <line x1="5" x2="19" y1="12" y2="12"></line>
+                                </svg>
+                                Add Pull Quote
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Custom Template Fields -->
+                    <div id="customTemplateFields" class="template-fields" style="display: none;">
+                        <div class="form-group">
+                            <label class="form-label">HTML</label>
+                            <textarea name="customHtml" class="code-editor" rows="10" placeholder="Enter your custom HTML..."></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">CSS</label>
+                            <textarea name="customCss" class="code-editor" rows="8" placeholder="Enter your custom CSS..."></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">JavaScript</label>
+                            <textarea name="customJs" class="code-editor" rows="6" placeholder="Enter your custom JavaScript..."></textarea>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Settings Tab -->
+                <div id="settingsTab" class="tab-content">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Content Type *</label>
+                            <select name="contentType" class="form-select" required>
+                                <option value="">Select content type</option>
+                                <option value="Blog Posts">Blog Posts</option>
+                                <option value="Case Studies">Case Studies</option>
+                                <option value="User Interview">User Interview</option>
+                                <option value="Quantitative Research">Quantitative Research</option>
+                                <option value="Competitors Research">Competitors Research</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Service Category *</label>
+                            <select name="serviceCategory" class="form-select" required>
+                                <option value="">Select service category</option>
+                                <option value="Meta & Google Ads">Meta & Google Ads</option>
+                                <option value="First Party Data">First Party Data</option>
+                                <option value="CRO">CRO</option>
+                                <option value="High Performing Creatives">High Performing Creatives</option>
+                                <option value="Retention Marketing">Retention Marketing</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Tags</label>
+                        <input type="text" id="tagsInput" class="form-input" placeholder="Enter tags separated by commas">
+                        <div id="tagsContainer" class="tags-container"></div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Related Posts</label>
+                        <select id="relatedPostsSelect" class="form-select" multiple>
+                            <!-- Options will be populated dynamically -->
+                        </select>
+                    </div>
+                </div>
+                
+                <!-- SEO Tab -->
+                <div id="seoTab" class="tab-content">
+                    <div class="form-group">
+                        <label class="form-label">SEO Title</label>
+                        <input type="text" name="seoTitle" class="form-input" placeholder="Leave empty to use post title">
+                        <small class="form-help">Recommended: 50-60 characters</small>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">SEO Description</label>
+                        <textarea name="seoDescription" class="form-textarea" rows="3" placeholder="Leave empty to use excerpt"></textarea>
+                        <small class="form-help">Recommended: 150-160 characters</small>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Canonical URL</label>
+                        <input type="url" name="canonical" class="form-input" placeholder="https://example.com/canonical-url">
+                    </div>
+                </div>
+                
+                <div class="modal-footer">
+                    <div class="modal-actions">
+                        <button type="button" id="saveDraftBtn" class="btn btn-ghost">Save Draft</button>
+                        <button type="button" id="submitApprovalBtn" class="btn btn-secondary" style="display: none;">Submit for Approval</button>
+                        <button type="button" id="approvePostBtn" class="btn btn-success" style="display: none;">Approve</button>
+                        <button type="button" id="rejectPostBtn" class="btn btn-danger" style="display: none;">Reject</button>
+                        <button type="submit" class="btn btn-primary">Save Post</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Author Editor Modal -->
+    <div id="authorEditorModal" class="modal-overlay" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="authorEditorTitle" class="modal-title">New Author</h2>
+                <button id="closeAuthorEditorBtn" class="modal-close">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="18" x2="6" y1="6" y2="18"></line>
+                        <line x1="6" x2="18" y1="6" y2="18"></line>
+                    </svg>
+                </button>
+            </div>
+            
+            <form id="authorEditorForm" class="author-editor-form">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Username *</label>
+                        <input type="text" name="username" class="form-input" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Full Name *</label>
+                        <input type="text" name="fullName" class="form-input" required>
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Role *</label>
+                        <select name="role" class="form-select" required>
+                            <option value="">Select role</option>
+                            <option value="admin">Admin</option>
+                            <option value="author">Author</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Work Designation</label>
+                        <input type="text" name="designation" class="form-input" placeholder="e.g., Senior Marketing Strategist">
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Password</label>
+                    <input type="password" name="password" class="form-input" id="authorPassword">
+                    <small class="form-help">Leave empty to keep current password (when editing)</small>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Avatar URL</label>
+                    <input type="url" name="avatarUrl" class="form-input" placeholder="https://example.com/avatar.jpg">
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Bio</label>
+                    <textarea name="bio" class="form-textarea" rows="3" placeholder="Brief bio about the author..."></textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Social Links</label>
+                    <div class="social-inputs">
+                        <div class="social-input-group">
+                            <label class="social-label">Instagram</label>
+                            <input type="url" name="instagram" class="form-input" placeholder="https://instagram.com/username">
+                        </div>
+                        <div class="social-input-group">
+                            <label class="social-label">YouTube</label>
+                            <input type="url" name="youtube" class="form-input" placeholder="https://youtube.com/@username">
+                        </div>
+                        <div class="social-input-group">
+                            <label class="social-label">X (Twitter)</label>
+                            <input type="url" name="x" class="form-input" placeholder="https://x.com/username">
+                        </div>
+                        <div class="social-input-group">
+                            <label class="social-label">Facebook</label>
+                            <input type="url" name="facebook" class="form-input" placeholder="https://facebook.com/username">
+                        </div>
+                        <div class="social-input-group">
+                            <label class="social-label">LinkedIn</label>
+                            <input type="url" name="linkedin" class="form-input" placeholder="https://linkedin.com/in/username">
+                        </div>
+                        <div class="social-input-group">
+                            <label class="social-label">Website</label>
+                            <input type="url" name="website" class="form-input" placeholder="https://yourwebsite.com">
+                        </div>
+                        <div class="social-input-group">
+                            <label class="social-label">Email</label>
+                            <input type="email" name="email" class="form-input" placeholder="author@example.com">
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label class="checkbox-label">
+                        <input type="checkbox" name="active" checked>
+                        <span class="checkbox-custom"></span>
+                        Active
+                    </label>
+                </div>
+                
+                <div class="modal-footer">
+                    <div class="modal-actions">
+                        <button type="button" class="btn btn-ghost" onclick="closeAuthorEditor()">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Save Author</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Confirmation Modal -->
+    <div id="confirmModal" class="modal-overlay" style="display: none;">
+        <div class="modal-content modal-small">
+            <div class="modal-header">
+                <h2 id="confirmTitle" class="modal-title">Confirm Action</h2>
+            </div>
+            <div class="modal-body">
+                <p id="confirmMessage">Are you sure you want to perform this action?</p>
+            </div>
+            <div class="modal-footer">
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-ghost" onclick="closeConfirmModal()">Cancel</button>
+                    <button type="button" id="confirmActionBtn" class="btn btn-danger">Confirm</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div id="toast-container" class="toast-container"></div>
+
+    <!-- Scripts -->
+    <script src="/js/script.js"></script>
+    <script src="/admin/js/admin.js"></script>
+</body>
+</html>
