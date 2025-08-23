@@ -1,6 +1,7 @@
+require('dotenv').config();
+
 const bcrypt = require('bcryptjs');
-const { v4: uuidv4 } = require('uuid');
-const { readData, writeData } = require('../utils/dataStore');
+const { writeData, uuidv4 } = require('../utils/dataStore');
 const readline = require('readline');
 
 const rl = readline.createInterface({
@@ -22,17 +23,10 @@ const createAdmin = async () => {
     const fullName = await question('Full Name: ');
     const password = await question('Password: ');
     const email = await question('Email (optional): ');
+    const designation = await question('Work Designation (optional): ');
 
     if (!username || !fullName || !password) {
       console.log('❌ Username, full name, and password are required');
-      process.exit(1);
-    }
-
-    const authors = await readData('authors');
-    
-    // Check if username already exists
-    if (authors.some(author => author.username === username)) {
-      console.log('❌ Username already exists');
       process.exit(1);
     }
 
@@ -41,28 +35,27 @@ const createAdmin = async () => {
     const newAdmin = {
       id: uuidv4(),
       username,
-      passwordHash,
-      fullName,
+      password_hash: passwordHash,
+      full_name: fullName,
+      designation: designation || 'Site Administrator',
       bio: 'Site Administrator',
-      avatarUrl: null,
+      avatar_url: null,
       role: 'admin',
       social: {
         instagram: null,
         youtube: null,
         x: null,
         facebook: null,
-        snapchat: null,
         linkedin: null,
         website: null,
         email: email || null
       },
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
       active: true
     };
 
-    authors.push(newAdmin);
-    await writeData('authors', authors);
+    await writeData('authors', newAdmin);
 
     console.log('\n✅ Admin user created successfully!');
     console.log(`Username: ${username}`);

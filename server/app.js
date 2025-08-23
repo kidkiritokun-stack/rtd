@@ -11,14 +11,11 @@ const authRoutes = require('./routes/auth');
 const authorRoutes = require('./routes/authors');
 const postRoutes = require('./routes/posts');
 const contactRoutes = require('./routes/contact');
+const uploadRoutes = require('./routes/upload');
 const { errorHandler } = require('./middleware/errorHandler');
-// ⛔ Removed initializeData import (no longer needed with Supabase)
 
 const app = express();
-const PORT = process.env.PORT || 3000;
-
 app.set('trust proxy', 1);
-
 // Security middleware
 app.use(helmet({
   contentSecurityPolicy: {
@@ -76,6 +73,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/authors', authorRoutes);
 app.use('/api/posts', postRoutes);
 app.use('/api/contact', contactRoutes);
+app.use('/api/upload', uploadRoutes);
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {

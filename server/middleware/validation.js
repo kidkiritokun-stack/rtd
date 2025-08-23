@@ -154,10 +154,83 @@ const validateContact = [
     .trim()
     .matches(/^[\+]?[1-9][\d]{0,15}$/)
     .withMessage('Invalid phone number format'),
+  body('company')
+    .optional()
+    .trim()
+    .isLength({ max: 255 })
+    .withMessage('Company name must be less than 255 characters'),
+  body('message')
+    .optional()
+    .trim()
+    .isLength({ min: 10, max: 1000 })
+    .withMessage('Message must be 10-1000 characters'),
+  handleValidationErrors
+];
+
+// Challenge validation
+const validateChallenge = [
+  body('name')
+    .trim()
+    .isLength({ min: 2, max: 100 })
+    .withMessage('Name must be 2-100 characters'),
+  body('email')
+    .isEmail()
+    .normalizeEmail()
+    .withMessage('Valid email required'),
+  body('company')
+    .trim()
+    .isLength({ min: 2, max: 255 })
+    .withMessage('Company name must be 2-255 characters'),
+  body('challenge')
+    .trim()
+    .isLength({ min: 10, max: 1000 })
+    .withMessage('Challenge must be 10-1000 characters'),
+  handleValidationErrors
+];
+
+// Inquiry validation
+const validateInquiry = [
+  body('name')
+    .trim()
+    .isLength({ min: 2, max: 100 })
+    .withMessage('Name must be 2-100 characters'),
+  body('email')
+    .isEmail()
+    .normalizeEmail()
+    .withMessage('Valid email required'),
+  body('phone')
+    .optional()
+    .trim()
+    .matches(/^[\+]?[1-9][\d]{0,15}$/)
+    .withMessage('Invalid phone number format'),
+  body('company')
+    .optional()
+    .trim()
+    .isLength({ max: 255 })
+    .withMessage('Company name must be less than 255 characters'),
+  body('subject')
+    .optional()
+    .trim()
+    .isLength({ max: 255 })
+    .withMessage('Subject must be less than 255 characters'),
   body('message')
     .trim()
     .isLength({ min: 10, max: 1000 })
     .withMessage('Message must be 10-1000 characters'),
+  handleValidationErrors
+];
+
+// Newsletter validation
+const validateNewsletter = [
+  body('email')
+    .isEmail()
+    .normalizeEmail()
+    .withMessage('Valid email required'),
+  body('name')
+    .optional()
+    .trim()
+    .isLength({ min: 2, max: 100 })
+    .withMessage('Name must be 2-100 characters'),
   handleValidationErrors
 ];
 
@@ -196,6 +269,9 @@ module.exports = {
   validateAuthor,
   validatePost,
   validateContact,
+  validateChallenge,
+  validateInquiry,
+  validateNewsletter,
   validatePostQuery,
   handleValidationErrors
 };

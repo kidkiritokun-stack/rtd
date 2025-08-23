@@ -1,6 +1,6 @@
 # Case Studies CMS (Blogs)
 
-A JSON-based Content Management System for case studies and blog posts with role-based access control, built with vanilla JavaScript, Node.js, and Express.
+A Supabase-powered Content Management System for case studies and blog posts with role-based access control, built with vanilla JavaScript, Node.js, and Express.
 
 ## Features
 
@@ -8,7 +8,7 @@ A JSON-based Content Management System for case studies and blog posts with role
 - **Content Management**: Create, edit, approve, and publish case studies and blog posts
 - **Template System**: Default template with rich text editor or custom HTML/CSS/JS
 - **Public Site**: Responsive case studies listing with filters and individual post pages
-- **JSON Storage**: File-based storage system using JSON files
+- **Supabase Integration**: PostgreSQL database with file storage for images
 - **Security**: JWT authentication, password hashing, input validation, and HTML sanitization
 - **SEO Optimized**: Meta tags, structured data, and semantic HTML
 
@@ -16,7 +16,8 @@ A JSON-based Content Management System for case studies and blog posts with role
 
 - **Frontend**: Pure HTML, CSS, and vanilla JavaScript
 - **Backend**: Node.js + Express
-- **Storage**: JSON files with custom file I/O
+- **Database**: Supabase (PostgreSQL)
+- **Storage**: Supabase Storage for images
 - **Authentication**: JWT with HttpOnly cookies + bcryptjs
 - **Security**: Input validation, HTML sanitization (DOMPurify), CORS protection
 - **Performance**: Lazy loading, responsive images, code splitting
@@ -41,11 +42,6 @@ omega/
 │   ├── middleware/       # Custom middleware
 │   ├── utils/            # Utility functions
 │   └── scripts/          # Setup and maintenance scripts
-├── data/                 # JSON storage
-│   ├── authors.json      # User accounts
-│   ├── posts.json        # Blog posts/case studies
-│   ├── settings.json     # Site settings
-│   └── inbox.json        # Contact form submissions
 └── package.json
 ```
 
@@ -54,6 +50,7 @@ omega/
 ### Prerequisites
 
 - Node.js 16+ installed
+- Supabase account and project
 - Git (optional, for version control)
 
 ### Installation & Setup
@@ -68,87 +65,12 @@ omega/
    npm install
    ```
 
-3. **Create environment variables**:
-   Create a `.env` file in the omega directory:
-   ```env
-   JWT_SECRET=your-super-secret-jwt-key-here-make-it-long-and-random
-   COOKIE_NAME=cms_auth
-   SITE_URL=http://localhost:3000
-   PORT=3000
-   NODE_ENV=development
-   ```
-
-4. **Initialize sample data**:
-   ```bash
-   npm run init-data
-   ```
-
-5. **Start the development server**:
-   ```bash
-   npm start
-   ```
+3. **Set up Supabase**:
    
-   For development with auto-restart:
-   ```bash
-   npm run dev
-   ```
+   Create a new Supabase project at https://supabase.com and run this SQL in the SQL Editor:
 
-6. **Access the application**:
-   - **Public Site**: http://localhost:3000
-   - **Admin Dashboard**: http://localhost:3000/admin
-   - **Default Admin Login**: `admin` / `admin123`
-   - **Default Author Login**: `sarah_johnson` / `author123`
-
-### Testing the System
-
-1. **Test Public Site**:
-   - Visit http://localhost:3000
-   - Browse case studies with filters
-   - Click on individual posts
-   - Test contact forms
-
-2. **Test Admin Dashboard**:
-   - Login at http://localhost:3000/admin
-   - Create, edit, and manage posts
-   - Manage authors (admin only)
-   - Test approval workflow
-
-3. **Test Author Workflow**:
-   - Login as author (`sarah_johnson` / `author123`)
-   - Create a new post
-   - Submit for approval
-   - Login as admin to approve/reject
-
-## Production Deployment
-
-### Option 1: Render + Supabase (Recommended)
-
-This setup uses Render for hosting the Node.js server and Supabase for database and file storage.
-
-#### Step 1: Prepare for Supabase
-
-1. **Create Supabase Project**:
-   - Go to https://supabase.com
-   - Create new project
-   - Note your project URL and anon key
-
-2. **Set up Supabase Storage**:
    ```sql
-   -- Create storage bucket for images
-   INSERT INTO storage.buckets (id, name, public) 
-   VALUES ('cms-images', 'cms-images', true);
-   
-   -- Create storage policy
-   CREATE POLICY "Public Access" ON storage.objects 
-   FOR SELECT USING (bucket_id = 'cms-images');
-   
-   CREATE POLICY "Authenticated Upload" ON storage.objects 
-   FOR INSERT WITH CHECK (bucket_id = 'cms-images' AND auth.role() = 'authenticated');
-   ```
-
-3. **Create Database Tables**:
-   ```sql
-   -- Authors table
+   -- Create authors table
    CREATE TABLE authors (
      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
      username TEXT UNIQUE NOT NULL,
@@ -164,7 +86,7 @@ This setup uses Render for hosting the Node.js server and Supabase for database 
      updated_at TIMESTAMPTZ DEFAULT NOW()
    );
 
-   -- Posts table
+   -- Create posts table
    CREATE TABLE posts (
      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
      title TEXT NOT NULL,
@@ -181,40 +103,201 @@ This setup uses Render for hosting the Node.js server and Supabase for database 
      tags TEXT[] DEFAULT '{}',
      related_ids UUID[] DEFAULT '{}',
      seo JSONB DEFAULT '{}',
+     rejection_reason TEXT,
      created_at TIMESTAMPTZ DEFAULT NOW(),
      updated_at TIMESTAMPTZ DEFAULT NOW()
    );
 
-   -- Inbox table
-   CREATE TABLE inbox (
-     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-     name TEXT NOT NULL,
-     email TEXT NOT NULL,
-     phone TEXT,
-     message TEXT NOT NULL,
-     read BOOLEAN DEFAULT false,
-     submitted_at TIMESTAMPTZ DEFAULT NOW()
+   -- Create contact_submissions table
+   CREATE TABLE contact_submissions (
+     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+     name VARCHAR(255) NOT NULL,
+     phone VARCHAR(50),
+     email VARCHAR(255) NOT NULL,
+     company VARCHAR(255),
+     message TEXT,
+     subject VARCHAR(255),
+     submission_type VARCHAR(50) NOT NULL DEFAULT 'contact_form',
+     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
    );
 
-   -- Settings table
-   CREATE TABLE settings (
-     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-     key TEXT UNIQUE NOT NULL,
-     value JSONB NOT NULL,
-     updated_at TIMESTAMPTZ DEFAULT NOW()
+   -- Create newsletter_subscriptions table
+   CREATE TABLE newsletter_subscriptions (
+     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+     email VARCHAR(255) UNIQUE NOT NULL,
+     name VARCHAR(255),
+     is_active BOOLEAN DEFAULT true,
+     subscribed_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+     unsubscribed_at TIMESTAMP WITH TIME ZONE
    );
-   ```
 
-4. **Update Server Code for Supabase**:
-   Replace JSON file operations with Supabase client calls:
-   ```javascript
-   // Install Supabase client
-   npm install @supabase/supabase-js
+   -- Create storage bucket for images
+   INSERT INTO storage.buckets (id, name, public) 
+   VALUES ('cms-images', 'cms-images', true);
+
+   -- Indexes
+   CREATE INDEX idx_posts_status ON posts(status);
+   CREATE INDEX idx_posts_author_id ON posts(author_id);
+   CREATE INDEX idx_posts_published_at ON posts(published_at DESC);
+   CREATE INDEX idx_contact_submissions_created_at ON contact_submissions(created_at DESC);
+   CREATE INDEX idx_contact_submissions_type ON contact_submissions(submission_type);
+   CREATE INDEX idx_newsletter_email ON newsletter_subscriptions(email);
+
+   -- Enable RLS
+   ALTER TABLE authors ENABLE ROW LEVEL SECURITY;
+   ALTER TABLE posts ENABLE ROW LEVEL SECURITY;
+   ALTER TABLE contact_submissions ENABLE ROW LEVEL SECURITY;
+   ALTER TABLE newsletter_subscriptions ENABLE ROW LEVEL SECURITY;
+
+   -- RLS Policies
+   CREATE POLICY "Allow public read on approved posts" 
+   ON posts FOR SELECT 
+   TO anon 
+   USING (status = 'approved');
+
+   CREATE POLICY "Allow authenticated read on posts" 
+   ON posts FOR SELECT 
+   TO authenticated 
+   USING (true);
+
+   CREATE POLICY "Allow authenticated insert on posts" 
+   ON posts FOR INSERT 
+   TO authenticated 
+   WITH CHECK (true);
+
+   CREATE POLICY "Allow authenticated update on posts" 
+   ON posts FOR UPDATE 
+   TO authenticated 
+   USING (true);
+
+   CREATE POLICY "Allow authenticated delete on posts" 
+   ON posts FOR DELETE 
+   TO authenticated 
+   USING (true);
+
+   CREATE POLICY "Allow authenticated read on authors" 
+   ON authors FOR SELECT 
+   TO authenticated 
+   USING (true);
+
+   CREATE POLICY "Allow authenticated insert on authors" 
+   ON authors FOR INSERT 
+   TO authenticated 
+   WITH CHECK (true);
+
+   CREATE POLICY "Allow authenticated update on authors" 
+   ON authors FOR UPDATE 
+   TO authenticated 
+   USING (true);
+
+   CREATE POLICY "Allow authenticated delete on authors" 
+   ON authors FOR DELETE 
+   TO authenticated 
+   USING (true);
+
+   CREATE POLICY "Allow public inserts on contact_submissions" 
+   ON contact_submissions FOR INSERT 
+   TO anon 
+   WITH CHECK (true);
+
+   CREATE POLICY "Allow public inserts on newsletter_subscriptions" 
+   ON newsletter_subscriptions FOR INSERT 
+   TO anon 
+   WITH CHECK (true);
+
+   CREATE POLICY "Allow authenticated read on contact_submissions" 
+   ON contact_submissions FOR SELECT 
+   TO authenticated 
+   USING (true);
+
+   CREATE POLICY "Allow authenticated read on newsletter_subscriptions" 
+   ON newsletter_subscriptions FOR SELECT 
+   TO authenticated 
+   USING (true);
+
+   -- Storage policies
+   CREATE POLICY "Public Access" ON storage.objects 
+   FOR SELECT USING (bucket_id = 'cms-images');
    
-   // Update dataStore.js to use Supabase
-   const { createClient } = require('@supabase/supabase-js');
-   const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY);
+   CREATE POLICY "Authenticated Upload" ON storage.objects 
+   FOR INSERT WITH CHECK (bucket_id = 'cms-images' AND auth.role() = 'authenticated');
    ```
+
+4. **Create environment variables**:
+   Create a `.env` file in the omega directory:
+   ```env
+   JWT_SECRET=your-super-secret-jwt-key-here-make-it-long-and-random
+   COOKIE_NAME=cms_auth
+   SITE_URL=http://localhost:3000
+   PORT=3000
+   NODE_ENV=development
+   SUPABASE_URL=your-supabase-project-url
+   SUPABASE_SERVICE_KEY=your-supabase-service-role-key
+   SUPABASE_ANON_KEY=your-supabase-anon-key
+   ```
+
+5. **Create the first admin user**:
+   ```bash
+   npm run create-admin
+   ```
+
+6. **Start the development server**:
+   ```bash
+   npm start
+   ```
+   
+   For development with auto-restart:
+   ```bash
+   npm run dev
+   ```
+
+7. **Access the application**:
+   - **Public Site**: http://localhost:3000
+   - **Admin Dashboard**: http://localhost:3000/admin
+   - **Login with your created admin credentials**
+
+### Testing the System
+
+1. **Test Public Site**:
+   - Visit http://localhost:3000
+   - Browse case studies with filters
+   - Click on individual posts
+   - Test contact forms
+
+2. **Test Admin Dashboard**:
+   - Login at http://localhost:3000/admin
+   - Create, edit, and manage posts
+   - Manage authors (admin only)
+   - Test approval workflow
+
+3. **Test Author Workflow**:
+   - Create an author account via admin dashboard
+   - Login as author
+   - Create a new post
+   - Submit for approval
+   - Login as admin to approve/reject
+
+## Production Deployment
+
+### Option 1: Render + Supabase (Recommended)
+
+This setup uses Render for hosting the Node.js server and Supabase for database and file storage.
+
+#### Step 1: Prepare Supabase for Production
+
+1. **Your Supabase project should already be set up** with the tables from local development.
+
+2. **Configure Storage Bucket**:
+   - Go to Storage in your Supabase dashboard
+   - The `cms-images` bucket should already exist
+   - Ensure it's set to public
+   - Verify the storage policies are in place
+
+3. **Get your production keys**:
+   - Go to Settings > API in your Supabase dashboard
+   - Copy your Project URL
+   - Copy your `anon` key and `service_role` key
 
 #### Step 2: Deploy to Render
 
@@ -227,86 +310,194 @@ This setup uses Render for hosting the Node.js server and Supabase for database 
    ```
 
 2. **Deploy on Render**:
+   - Go to https://render.com and create an account
+   - Click "New +" and select "Web Service"
    - Connect your GitHub repository
-   - Set build command: `cd omega && npm install`
-   - Set start command: `cd omega && npm start`
-   - Add environment variables:
-     ```
-     JWT_SECRET=your-production-secret-key
-     COOKIE_NAME=cms_auth
-     SITE_URL=https://your-app.onrender.com
-     PORT=3000
-     NODE_ENV=production
-     SUPABASE_URL=your-supabase-url
-     SUPABASE_SERVICE_KEY=your-supabase-service-key
-     ```
+   - Configure the service:
+     - **Name**: your-cms-name
+     - **Environment**: Node
+     - **Region**: Choose closest to your users
+     - **Branch**: main
+     - **Root Directory**: omega
+     - **Build Command**: `npm install`
+     - **Start Command**: `npm start`
 
-3. **Configure Domain**:
-   - Add custom domain in Render dashboard
-   - Update SITE_URL environment variable
+3. **Add Environment Variables** in Render dashboard:
+   ```
+   JWT_SECRET=your-production-secret-key-make-it-different-from-local
+   COOKIE_NAME=cms_auth
+   SITE_URL=https://your-app.onrender.com
+   PORT=3000
+   NODE_ENV=production
+   SUPABASE_URL=your-supabase-project-url
+   SUPABASE_SERVICE_KEY=your-supabase-service-role-key
+   SUPABASE_ANON_KEY=your-supabase-anon-key
+   ```
 
-#### Step 3: Image Upload Integration
+4. **Deploy and Test**:
+   - Click "Create Web Service"
+   - Wait for deployment to complete
+   - Test your live site
+   - Create your first admin user: SSH into Render and run `npm run create-admin`
 
-Update the admin dashboard to upload images to Supabase Storage:
+#### Step 3: Configure Custom Domain (Optional)
 
-```javascript
-// Add to admin.js
-async uploadImage(file) {
-  const fileExt = file.name.split('.').pop();
-  const fileName = `${Date.now()}.${fileExt}`;
-  
-  const { data, error } = await supabase.storage
-    .from('cms-images')
-    .upload(fileName, file);
-    
-  if (error) throw error;
-  
-  const { data: { publicUrl } } = supabase.storage
-    .from('cms-images')
-    .getPublicUrl(fileName);
-    
-  return publicUrl;
-}
-```
+1. **Add Custom Domain** in Render dashboard
+2. **Update Environment Variables**:
+   - Change `SITE_URL` to your custom domain
+   - Update CORS settings if needed
 
 ### Option 2: Traditional Hosting (Hostinger/cPanel)
 
+This setup uses traditional hosting with MySQL database and local file storage.
+
 #### Step 1: Prepare for Traditional Hosting
 
-1. **Database Setup**:
-   - Create MySQL database in cPanel
-   - Install MySQL adapter: `npm install mysql2`
-   - Update dataStore.js to use MySQL instead of JSON files
+1. **Set up MySQL Database**:
+   - Create a MySQL database in cPanel
+   - Note the database name, username, and password
+   - Install MySQL adapter:
+     ```bash
+     npm install mysql2
+     ```
 
-2. **Update Server Code**:
+2. **Update Database Configuration**:
+   Create `server/utils/mysqlStore.js`:
    ```javascript
-   // Replace JSON operations with MySQL queries
    const mysql = require('mysql2/promise');
-   
+
    const connection = mysql.createConnection({
-     host: process.env.DB_HOST,
+     host: process.env.DB_HOST || 'localhost',
      user: process.env.DB_USER,
      password: process.env.DB_PASSWORD,
      database: process.env.DB_NAME
    });
+
+   // Create tables
+   const initializeDatabase = async () => {
+     await connection.execute(`
+       CREATE TABLE IF NOT EXISTS authors (
+         id VARCHAR(36) PRIMARY KEY,
+         username VARCHAR(50) UNIQUE NOT NULL,
+         password_hash TEXT NOT NULL,
+         full_name VARCHAR(255) NOT NULL,
+         designation VARCHAR(255),
+         bio TEXT,
+         avatar_url TEXT,
+         role ENUM('admin', 'author') NOT NULL,
+         social JSON,
+         active BOOLEAN DEFAULT true,
+         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+       )
+     `);
+
+     await connection.execute(`
+       CREATE TABLE IF NOT EXISTS posts (
+         id VARCHAR(36) PRIMARY KEY,
+         title VARCHAR(255) NOT NULL,
+         slug VARCHAR(255) UNIQUE NOT NULL,
+         excerpt TEXT NOT NULL,
+         banner JSON NOT NULL,
+         content_type VARCHAR(100) NOT NULL,
+         service_category VARCHAR(100) NOT NULL,
+         status ENUM('draft', 'pending_approval', 'approved', 'rejected') DEFAULT 'draft',
+         author_id VARCHAR(36),
+         published_at TIMESTAMP NULL,
+         views INT DEFAULT 0,
+         template JSON NOT NULL,
+         tags JSON,
+         related_ids JSON,
+         seo JSON,
+         rejection_reason TEXT,
+         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+         FOREIGN KEY (author_id) REFERENCES authors(id)
+       )
+     `);
+
+     await connection.execute(`
+       CREATE TABLE IF NOT EXISTS contact_submissions (
+         id VARCHAR(36) PRIMARY KEY,
+         name VARCHAR(255) NOT NULL,
+         phone VARCHAR(50),
+         email VARCHAR(255) NOT NULL,
+         company VARCHAR(255),
+         message TEXT,
+         subject VARCHAR(255),
+         submission_type VARCHAR(50) DEFAULT 'contact_form',
+         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+       )
+     `);
+
+     await connection.execute(`
+       CREATE TABLE IF NOT EXISTS newsletter_subscriptions (
+         id VARCHAR(36) PRIMARY KEY,
+         email VARCHAR(255) UNIQUE NOT NULL,
+         name VARCHAR(255),
+         is_active BOOLEAN DEFAULT true,
+         subscribed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+         unsubscribed_at TIMESTAMP NULL
+       )
+     `);
+   };
+
+   module.exports = { connection, initializeDatabase };
+   ```
+
+3. **Update dataStore.js** to use MySQL instead of Supabase:
+   ```javascript
+   const { connection } = require('./mysqlStore');
+   
+   const readData = async (tableName) => {
+     const [rows] = await connection.execute(`SELECT * FROM ${tableName} ORDER BY created_at DESC`);
+     return rows;
+   };
+
+   const writeData = async (tableName, data) => {
+     const fields = Object.keys(data).join(', ');
+     const placeholders = Object.keys(data).map(() => '?').join(', ');
+     const values = Object.values(data);
+     
+     await connection.execute(
+       `INSERT INTO ${tableName} (${fields}) VALUES (${placeholders})`,
+       values
+     );
+   };
+   
+   // ... implement other methods
    ```
 
 #### Step 2: File Upload Handling
 
 1. **Local File Upload**:
+   Update `server/utils/storage.js`:
    ```javascript
-   // Add multer for file uploads
-   npm install multer
-   
-   // Configure multer in app.js
    const multer = require('multer');
-   const upload = multer({ dest: 'public/assets/uploads/' });
-   
-   // Add upload endpoint
-   app.post('/api/upload', upload.single('image'), (req, res) => {
-     const imageUrl = `/assets/uploads/${req.file.filename}`;
-     res.json({ url: imageUrl });
+   const path = require('path');
+
+   const storage = multer.diskStorage({
+     destination: 'public/assets/uploads/',
+     filename: (req, file, cb) => {
+       const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+       cb(null, uniqueSuffix + path.extname(file.originalname));
+     }
    });
+
+   const upload = multer({ 
+     storage,
+     limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
+     fileFilter: (req, file, cb) => {
+       if (file.mimetype.startsWith('image/')) {
+         cb(null, true);
+       } else {
+         cb(new Error('Only image files allowed'));
+       }
+     }
+   });
+
+   module.exports = { upload };
    ```
 
 2. **Update Admin Dashboard**:
@@ -369,38 +560,20 @@ async uploadImage(file) {
    RewriteRule ^post/(.+)$ /post.html [L]
    ```
 
-## Data Storage
+## Database Schema
 
-### JSON File Structure (Local Development)
+### Supabase Tables
 
-The system uses JSON files for data persistence:
+The system uses these Supabase tables:
 
-- **`/data/authors.json`**: User accounts with roles and permissions
-- **`/data/posts.json`**: Blog posts and case studies
-- **`/data/settings.json`**: Site configuration and popular posts
-- **`/data/inbox.json`**: Contact form submissions
+- **authors**: User accounts with roles and permissions
+- **posts**: Blog posts and case studies
+- **contact_submissions**: Contact form submissions
+- **newsletter_subscriptions**: Newsletter subscriber emails
 
-### Database Schema (Production)
+### Storage
 
-When using a database, the JSON structure maps to these tables:
-
-- **authors**: User accounts and profiles
-- **posts**: Content with template data stored as JSON
-- **inbox**: Contact form submissions
-- **settings**: Key-value configuration storage
-
-### Backup Strategy
-
-- **Local**: Automatic backups created before write operations in `/data/backups/`
-- **Production**: Database backups via hosting provider + file storage backups
-- **Manual backup**: `npm run backup`
-
-### Concurrency Notes
-
-- File operations use atomic writes with temporary files
-- Read operations are cached for performance
-- Write operations are queued to prevent conflicts
-- Database operations use transactions for consistency
+- **cms-images**: Supabase Storage bucket for uploaded images
 
 ## User Roles & Permissions
 
@@ -457,78 +630,7 @@ Once approved, only admins can edit or delete posts.
 - Retention Marketing
 - Other
 
-To add new types/categories, edit `/data/settings.json` and update the frontend forms.
-
-## Editor Modes
-
-### Default Template
-- Rich text editor with formatting options
-- Structured fields: title, excerpt, banner, content, pull-quotes
-- Automatic layout and styling
-- SEO fields and meta data
-
-### Custom Template
-- Full HTML/CSS/JS control
-- Code editors with syntax highlighting
-- HTML sanitization for security
-- Custom styling and interactions
-
-### Sanitization & Limits
-- HTML is sanitized using DOMPurify
-- JavaScript is executed in isolated scope
-- External requests are blocked by default
-- File size limits: HTML (100KB), CSS (50KB), JS (25KB)
-
-## Filtering & Pagination
-
-### How "Load More" Works
-1. Initial load: 6 posts with pattern (3 cards → CTA → 3 cards)
-2. "Load More": Fetches next 6 posts, appends with same pattern
-3. Filters: Single-select per group, resets pagination
-4. Search: Combines with filters, searches title/excerpt/content
-
-### API Parameters
-- `offset`: Starting position (default: 0)
-- `limit`: Number of posts (default: 6)
-- `contentType[]`: Filter by content type
-- `serviceCategory[]`: Filter by service category
-- `q`: Search query
-
-## SEO & Image Optimization
-
-### SEO Features
-- Unique page titles and meta descriptions
-- Canonical URLs
-- Open Graph and Twitter Card meta tags
-- JSON-LD structured data for articles
-- Semantic HTML structure
-
-### Image Optimization
-- Responsive images with srcset
-- Lazy loading below the fold
-- WebP/AVIF format support
-- Alt text requirements
-- Aspect ratio preservation
-
-## Security Features
-
-### Authentication
-- JWT tokens in HttpOnly cookies
-- Password hashing with bcryptjs (12 rounds)
-- Session timeout and refresh
-- CSRF protection
-
-### Input Validation
-- Server-side validation for all inputs
-- HTML sanitization for custom content
-- Rate limiting on auth endpoints
-- CORS restricted to site origin
-
-### Content Security
-- DOMPurify for HTML sanitization
-- JavaScript execution in isolated scope
-- File upload restrictions
-- SQL injection prevention (when using database)
+To add new types/categories, update the validation middleware and frontend forms.
 
 ## API Endpoints
 
@@ -554,104 +656,52 @@ To add new types/categories, edit `/data/settings.json` and update the frontend 
 - `POST /api/posts/:id/reject` - Reject post (admin only)
 - `POST /api/posts/:id/view` - Increment view count
 
-### Contact
+### 📩 Contact & Newsletter APIs
+
+**Public Endpoints**
 - `POST /api/contact` - Submit contact form
+- `POST /api/contact/challenge` - Submit challenge form
+- `POST /api/contact/inquiry` - Submit general inquiry
+- `POST /api/contact/newsletter` - Subscribe to newsletter
+
+**Admin Endpoints (JWT Auth Required, Admin Role)**
+- `GET /api/contact/admin/submissions` - List all submissions
+- `GET /api/contact/admin/newsletter` - List all newsletter subscribers
+- `PUT /api/contact/admin/newsletter/:id/unsubscribe` - Deactivate a subscriber
+
+### Upload
+- `POST /api/upload` - Upload image (authenticated users only)
+
+## Editor Modes
+
+### Default Template
+- Rich text editor with formatting options
+- Structured fields: title, excerpt, banner, content, pull-quotes
+- Automatic layout and styling
+- SEO fields and meta data
+
+### Custom Template
+- Full HTML/CSS/JS control
+- Code editors with syntax highlighting
+- HTML sanitization for security
+- Custom styling and interactions
+
+### Sanitization & Limits
+- HTML is sanitized using DOMPurify
+- JavaScript is executed in isolated scope
+- External requests are blocked by default
+- File size limits: HTML (100KB), CSS (50KB), JS (25KB)
 
 ## Image Upload & Management
 
 ### Local Development
-Images are stored in `/public/assets/uploads/` directory:
-
-```javascript
-// Add to server/app.js
-const multer = require('multer');
-const path = require('path');
-
-const storage = multer.diskStorage({
-  destination: 'public/assets/uploads/',
-  filename: (req, file, cb) => {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    cb(null, uniqueSuffix + path.extname(file.originalname));
-  }
-});
-
-const upload = multer({ 
-  storage,
-  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
-  fileFilter: (req, file, cb) => {
-    if (file.mimetype.startsWith('image/')) {
-      cb(null, true);
-    } else {
-      cb(new Error('Only image files allowed'));
-    }
-  }
-});
-
-app.post('/api/upload', upload.single('image'), (req, res) => {
-  if (!req.file) {
-    return res.status(400).json({ error: 'No file uploaded' });
-  }
-  
-  const imageUrl = `/assets/uploads/${req.file.filename}`;
-  res.json({ url: imageUrl });
-});
-```
+Images are stored in `/public/assets/uploads/` directory with multer handling file uploads.
 
 ### Production with Supabase Storage
-
-```javascript
-// Update server/utils/storage.js
-const { createClient } = require('@supabase/supabase-js');
-
-const supabase = createClient(
-  process.env.SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_KEY
-);
-
-async function uploadImage(file, folder = 'posts') {
-  const fileExt = file.originalname.split('.').pop();
-  const fileName = `${folder}/${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
-  
-  const { data, error } = await supabase.storage
-    .from('cms-images')
-    .upload(fileName, file.buffer, {
-      contentType: file.mimetype,
-      upsert: false
-    });
-    
-  if (error) throw error;
-  
-  const { data: { publicUrl } } = supabase.storage
-    .from('cms-images')
-    .getPublicUrl(fileName);
-    
-  return publicUrl;
-}
-
-module.exports = { uploadImage };
-```
+Images are uploaded to Supabase Storage bucket `cms-images` with automatic URL generation.
 
 ### Production with Traditional Hosting
-
-For traditional hosting, images are stored in the server filesystem:
-
-```javascript
-// Ensure uploads directory exists
-const fs = require('fs');
-const uploadsDir = 'public/assets/uploads';
-if (!fs.existsSync(uploadsDir)) {
-  fs.mkdirSync(uploadsDir, { recursive: true });
-}
-
-// Configure multer for production
-const storage = multer.diskStorage({
-  destination: uploadsDir,
-  filename: (req, file, cb) => {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    cb(null, uniqueSuffix + path.extname(file.originalname));
-  }
-});
-```
+Images are stored in the server filesystem under `/public/assets/uploads/`.
 
 ## Environment Variables
 
@@ -662,6 +712,9 @@ COOKIE_NAME=cms_auth
 SITE_URL=http://localhost:3000
 PORT=3000
 NODE_ENV=development
+SUPABASE_URL=your-supabase-project-url
+SUPABASE_SERVICE_KEY=your-supabase-service-role-key
+SUPABASE_ANON_KEY=your-supabase-anon-key
 ```
 
 ### Production with Supabase
@@ -671,8 +724,9 @@ COOKIE_NAME=cms_auth
 SITE_URL=https://yourdomain.com
 PORT=3000
 NODE_ENV=production
-SUPABASE_URL=https://your-project.supabase.co
-SUPABASE_SERVICE_KEY=your-service-role-key
+SUPABASE_URL=your-supabase-project-url
+SUPABASE_SERVICE_KEY=your-supabase-service-role-key
+SUPABASE_ANON_KEY=your-supabase-anon-key
 ```
 
 ### Production with Traditional Hosting
@@ -695,130 +749,128 @@ DB_NAME=your_db_name
 npm run create-admin
 ```
 
-### Manual Creation
-Add to `/data/authors.json`:
-```json
-{
-  "id": "admin-uuid",
-  "username": "admin",
-  "passwordHash": "$2b$12$...",
-  "fullName": "Site Administrator",
-  "designation": "Chief Technology Officer",
-  "role": "admin",
-  "active": true,
-  "createdAt": "2025-01-XX",
-  "updatedAt": "2025-01-XX"
-}
-```
+Follow the prompts to create your admin user with:
+- Username
+- Full Name
+- Password
+- Email (optional)
+- Work Designation (optional)
 
-## Deployment Checklist
+## Security Features
 
-### Pre-Deployment
-- [ ] Update environment variables for production
-- [ ] Test all functionality locally
-- [ ] Run security audit: `npm audit`
-- [ ] Optimize images and assets
-- [ ] Test with production data volume
+### Authentication
+- JWT tokens in HttpOnly cookies
+- Password hashing with bcryptjs (12 rounds)
+- Session timeout and refresh
+- CSRF protection
 
-### Render + Supabase Deployment
-- [ ] Create Supabase project and configure storage
-- [ ] Set up database tables and policies
-- [ ] Deploy to Render with environment variables
-- [ ] Test image upload functionality
-- [ ] Configure custom domain
-- [ ] Set up monitoring and alerts
+### Input Validation
+- Server-side validation for all inputs
+- HTML sanitization for custom content
+- Rate limiting on auth endpoints
+- CORS restricted to site origin
 
-### Traditional Hosting Deployment
-- [ ] Set up MySQL database
-- [ ] Configure file upload directory
-- [ ] Upload files via FTP/cPanel
-- [ ] Install Node.js dependencies
-- [ ] Configure process manager (PM2)
-- [ ] Set up reverse proxy (Apache/Nginx)
-- [ ] Configure SSL certificate
+### Content Security
+- DOMPurify for HTML sanitization
+- JavaScript execution in isolated scope
+- File upload restrictions
+- SQL injection prevention with parameterized queries
+
+## Performance Optimization
+
+### Frontend
+- Lazy loading images below the fold
+- Responsive images with proper sizing
+- Code splitting and modular JavaScript
+- CSS optimization and minification
+
+### Backend
+- Database indexing for common queries
+- Caching strategies for frequently accessed data
+- Compression middleware
+- Rate limiting to prevent abuse
+
+## SEO & Image Optimization
+
+### SEO Features
+- Unique page titles and meta descriptions
+- Canonical URLs
+- Open Graph and Twitter Card meta tags
+- JSON-LD structured data for articles
+- Semantic HTML structure
+
+### Image Optimization
+- Responsive images with srcset
+- Lazy loading below the fold
+- WebP/AVIF format support
+- Alt text requirements
+- Aspect ratio preservation
 
 ## Monitoring & Maintenance
 
 ### Health Checks
 - Monitor `/api/health` endpoint
-- Check disk space for uploads
-- Monitor database performance
+- Check database connectivity
+- Monitor storage usage
 - Track error rates and response times
 
 ### Regular Maintenance
-- Backup data regularly
 - Update dependencies monthly
 - Monitor security vulnerabilities
-- Clean up old uploaded files
 - Review and rotate JWT secrets
+- Clean up old uploaded files
+- Monitor database performance
 
-### Performance Optimization
-- Enable gzip compression
-- Implement CDN for static assets
-- Optimize database queries
-- Cache frequently accessed data
-- Monitor and optimize Core Web Vitals
+### Backup Strategy
+- Supabase provides automatic backups
+- Export data regularly for additional safety
+- Monitor storage usage and costs
 
 ## Troubleshooting
 
 ### Common Issues
 
-1. **Port already in use**:
+1. **Database Connection Errors**:
    ```bash
-   # Kill process on port 3000
-   lsof -ti:3000 | xargs kill -9
+   # Check Supabase connection
+   curl -H "apikey: YOUR_ANON_KEY" https://your-project.supabase.co/rest/v1/authors
    ```
 
-2. **Permission errors**:
-   ```bash
-   # Fix file permissions
-   chmod -R 755 public/
-   chmod -R 644 data/
-   ```
-
-3. **Login issues**:
+2. **Authentication Issues**:
    - Verify JWT_SECRET is set correctly
    - Check cookie settings in browser
    - Ensure HTTPS in production
 
-4. **Missing posts**:
+3. **Image Upload Problems**:
+   - Check Supabase Storage policies
+   - Verify bucket permissions
+   - Test with different image formats
+
+4. **Missing Posts**:
    - Check post status (only approved posts are public)
    - Verify author permissions
-   - Check database/file integrity
+   - Check database constraints
 
 ### Debug Mode
 Set `NODE_ENV=development` and check server logs:
 ```bash
-# View logs
-tail -f logs/app.log
+# View logs in Render
+render logs --service your-service-name
 
-# Debug specific issues
+# Debug locally
 DEBUG=* npm start
-```
-
-### Database Issues
-```bash
-# Check database connection
-node -e "require('./server/utils/dataStore').testConnection()"
-
-# Repair corrupted JSON files
-npm run repair-data
-
-# Reset to default data
-npm run init-data
 ```
 
 ## Known Limitations & Future Improvements
 
 ### Current Limitations
-- JSON file storage (not suitable for high-traffic sites)
+- Single server instance only
 - No real-time collaboration
 - Limited media management
 - No automated backups
-- Single server instance only
+- Basic email notifications
 
 ### Future Improvements
-- Database migration path (SQLite → PostgreSQL)
 - Real-time editing with WebSockets
 - Advanced media management with CDN
 - Multi-language support
@@ -827,14 +879,13 @@ npm run init-data
 - Email notifications
 - Automated testing suite
 - Docker containerization
-- Kubernetes deployment
 
 ## Support
 
 For issues and questions:
 1. Check the troubleshooting section
 2. Review server logs
-3. Verify data file integrity
+3. Verify database connectivity
 4. Check browser console for frontend errors
 5. Test API endpoints with curl/Postman
 
@@ -846,6 +897,6 @@ For issues and questions:
 
 ---
 
-**Version**: 1.0.0  
+**Version**: 2.0.0  
 **Last Updated**: January 2025  
 **License**: MIT

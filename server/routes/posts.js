@@ -1,12 +1,12 @@
 const express = require('express');
-const { v4: uuidv4 } = require('uuid');
-const { readData, writeData, generateSlug } = require('../utils/dataStore');
+const { writeData, updateData, deleteData, findOne, generateSlug, uuidv4, getSupabaseClient } = require('../utils/dataStore');
 const { validatePost, validatePostQuery } = require('../middleware/validation');
 const { authenticateToken, requireAdmin, requireAuthorOrAdmin } = require('../middleware/auth');
 const { asyncHandler } = require('../middleware/errorHandler');
 const { sanitizeHTML, sanitizeCustomHTML, sanitizeCSS, sanitizeJS, validateContentSize } = require('../utils/sanitizer');
 
 const router = express.Router();
+const supabase = getSupabaseClient();
 
 // Get posts (public and authenticated)
 router.get('/', validatePostQuery, asyncHandler(async (req, res) => {
@@ -20,80 +20,104 @@ router.get('/', validatePostQuery, asyncHandler(async (req, res) => {
     authorId 
   } = req.query;
 
-  const posts = await readData('posts');
-  const authors = await readData('authors');
-
-  let filteredPosts = posts;
+  let query = supabase
+    .from('posts')
+    .select(`
+      *,
+      authors!posts_author_id_fkey (
+        id,
+        full_name,
+        avatar_url,
+        bio,
+        social,
+        designation
+      )
+    `);
 
   // Filter by status (public only sees approved)
   if (!req.user) {
-    filteredPosts = filteredPosts.filter(post => post.status === 'approved');
+    query = query.eq('status', 'approved');
   } else if (status) {
-    filteredPosts = filteredPosts.filter(post => post.status === status);
+    query = query.eq('status', status);
   }
 
   // Filter by author (for author dashboard)
   if (authorId) {
-    filteredPosts = filteredPosts.filter(post => post.authorId === authorId);
+    query = query.eq('author_id', authorId);
   }
 
   // Filter by content type
   if (contentType) {
-    filteredPosts = filteredPosts.filter(post => post.contentType === contentType);
+    query = query.eq('content_type', contentType);
   }
 
   // Filter by service category
   if (serviceCategory) {
-    filteredPosts = filteredPosts.filter(post => post.serviceCategory === serviceCategory);
+    query = query.eq('service_category', serviceCategory);
   }
 
   // Search filter
   if (q) {
-    const searchTerm = q.toLowerCase();
-    filteredPosts = filteredPosts.filter(post => 
-      post.title.toLowerCase().includes(searchTerm) ||
-      post.excerpt.toLowerCase().includes(searchTerm) ||
-      (post.template.defaultFields?.body && 
-       post.template.defaultFields.body.toLowerCase().includes(searchTerm))
-    );
+    query = query.or(`title.ilike.%${q}%, excerpt.ilike.%${q}%`);
   }
 
-  // Sort by publishedAt (newest first) for approved posts, updatedAt for others
-  filteredPosts.sort((a, b) => {
-    const dateA = a.status === 'approved' ? a.publishedAt : a.updatedAt;
-    const dateB = b.status === 'approved' ? b.publishedAt : b.updatedAt;
-    return new Date(dateB) - new Date(dateA);
-  });
+  // Order by published date for approved posts, updated date for others
+  if (!req.user || status !== 'approved') {
+    query = query.order('updated_at', { ascending: false });
+  } else {
+    query = query.order('published_at', { ascending: false });
+  }
 
-  // Pagination
-  const total = filteredPosts.length;
-  const paginatedPosts = filteredPosts.slice(
-    parseInt(offset), 
-    parseInt(offset) + parseInt(limit)
-  );
+  // Get total count for pagination
+  const { count } = await supabase
+    .from('posts')
+    .select('*', { count: 'exact', head: true });
 
-  // Add author information
-  const postsWithAuthors = paginatedPosts.map(post => {
-    const author = authors.find(a => a.id === post.authorId);
-    return {
-      ...post,
-      author: author ? {
-        id: author.id,
-        fullName: author.fullName,
-        avatarUrl: author.avatarUrl,
-        bio: author.bio,
-        social: author.social
-      } : null
-    };
-  });
+  // Apply pagination
+  query = query.range(parseInt(offset), parseInt(offset) + parseInt(limit) - 1);
+
+  const { data: posts, error } = await query;
+
+  if (error) {
+    throw error;
+  }
+
+  // Transform data to match frontend expectations
+  const transformedPosts = posts.map(post => ({
+    id: post.id,
+    title: post.title,
+    slug: post.slug,
+    excerpt: post.excerpt,
+    banner: post.banner,
+    contentType: post.content_type,
+    serviceCategory: post.service_category,
+    status: post.status,
+    authorId: post.author_id,
+    publishedAt: post.published_at,
+    views: post.views,
+    template: post.template,
+    tags: post.tags,
+    relatedIds: post.related_ids,
+    seo: post.seo,
+    createdAt: post.created_at,
+    updatedAt: post.updated_at,
+    author: post.authors ? {
+      id: post.authors.id,
+      fullName: post.authors.full_name,
+      avatarUrl: post.authors.avatar_url,
+      bio: post.authors.bio,
+      social: post.authors.social,
+      designation: post.authors.designation
+    } : null
+  }));
 
   res.json({
-    posts: postsWithAuthors,
+    posts: transformedPosts,
     pagination: {
       offset: parseInt(offset),
       limit: parseInt(limit),
-      total,
-      hasMore: parseInt(offset) + parseInt(limit) < total
+      total: count || 0,
+      hasMore: parseInt(offset) + parseInt(limit) < (count || 0)
     }
   });
 }));
@@ -102,12 +126,23 @@ router.get('/', validatePostQuery, asyncHandler(async (req, res) => {
 router.get('/:slug', asyncHandler(async (req, res) => {
   const { slug } = req.params;
 
-  const posts = await readData('posts');
-  const authors = await readData('authors');
-  
-  const post = posts.find(p => p.slug === slug);
+  const { data: post, error } = await supabase
+    .from('posts')
+    .select(`
+      *,
+      authors!posts_author_id_fkey (
+        id,
+        full_name,
+        avatar_url,
+        bio,
+        social,
+        designation
+      )
+    `)
+    .eq('slug', slug)
+    .single();
 
-  if (!post) {
+  if (error || !post) {
     return res.status(404).json({ error: 'Post not found' });
   }
 
@@ -118,55 +153,70 @@ router.get('/:slug', asyncHandler(async (req, res) => {
 
   if (post.status !== 'approved' && req.user) {
     // Authors can only see their own non-approved posts
-    if (req.user.role === 'author' && post.authorId !== req.user.id) {
+    if (req.user.role === 'author' && post.author_id !== req.user.id) {
       return res.status(404).json({ error: 'Post not found' });
     }
   }
 
-  // Add author information
-  const author = authors.find(a => a.id === post.authorId);
-  const postWithAuthor = {
-    ...post,
-    author: author ? {
-      id: author.id,
-      fullName: author.fullName,
-      avatarUrl: author.avatarUrl,
-      bio: author.bio,
-      social: author.social
+  // Get related posts
+  const { data: relatedPosts } = await supabase
+    .from('posts')
+    .select(`
+      id, title, slug, excerpt, banner, content_type, service_category, published_at,
+      authors!posts_author_id_fkey (full_name, avatar_url)
+    `)
+    .eq('status', 'approved')
+    .neq('id', post.id)
+    .limit(3);
+
+  // Transform post data
+  const transformedPost = {
+    id: post.id,
+    title: post.title,
+    slug: post.slug,
+    excerpt: post.excerpt,
+    banner: post.banner,
+    contentType: post.content_type,
+    serviceCategory: post.service_category,
+    status: post.status,
+    authorId: post.author_id,
+    publishedAt: post.published_at,
+    views: post.views,
+    template: post.template,
+    tags: post.tags,
+    relatedIds: post.related_ids,
+    seo: post.seo,
+    createdAt: post.created_at,
+    updatedAt: post.updated_at,
+    author: post.authors ? {
+      id: post.authors.id,
+      fullName: post.authors.full_name,
+      avatarUrl: post.authors.avatar_url,
+      bio: post.authors.bio,
+      social: post.authors.social,
+      designation: post.authors.designation
     } : null
   };
 
-  // Get related posts
-  const relatedPosts = posts
-    .filter(p => 
-      p.status === 'approved' && 
-      p.id !== post.id && 
-      (post.relatedIds?.includes(p.id) || 
-       p.contentType === post.contentType ||
-       p.serviceCategory === post.serviceCategory)
-    )
-    .slice(0, 3)
-    .map(p => {
-      const relatedAuthor = authors.find(a => a.id === p.authorId);
-      return {
-        id: p.id,
-        title: p.title,
-        slug: p.slug,
-        excerpt: p.excerpt,
-        banner: p.banner,
-        contentType: p.contentType,
-        serviceCategory: p.serviceCategory,
-        publishedAt: p.publishedAt,
-        author: relatedAuthor ? {
-          fullName: relatedAuthor.fullName,
-          avatarUrl: relatedAuthor.avatarUrl
-        } : null
-      };
-    });
+  // Transform related posts
+  const transformedRelatedPosts = relatedPosts ? relatedPosts.map(p => ({
+    id: p.id,
+    title: p.title,
+    slug: p.slug,
+    excerpt: p.excerpt,
+    banner: p.banner,
+    contentType: p.content_type,
+    serviceCategory: p.service_category,
+    publishedAt: p.published_at,
+    author: p.authors ? {
+      fullName: p.authors.full_name,
+      avatarUrl: p.authors.avatar_url
+    } : null
+  })) : [];
 
   res.json({
-    post: postWithAuthor,
-    relatedPosts
+    post: transformedPost,
+    relatedPosts: transformedRelatedPosts
   });
 }));
 
@@ -185,13 +235,12 @@ router.post('/', authenticateToken, requireAuthorOrAdmin, validatePost, asyncHan
     seo
   } = req.body;
 
-  const posts = await readData('posts');
-  
   // Generate unique slug
-  const finalSlug = slug || generateSlug(title, posts);
+  const finalSlug = slug || await generateSlug(title, 'posts');
   
   // Check if slug is unique
-  if (posts.some(post => post.slug === finalSlug)) {
+  const existingPost = await findOne('posts', 'slug', finalSlug);
+  if (existingPost) {
     return res.status(400).json({ error: 'Slug already exists' });
   }
 
@@ -229,26 +278,25 @@ router.post('/', authenticateToken, requireAuthorOrAdmin, validatePost, asyncHan
     slug: finalSlug,
     excerpt,
     banner,
-    contentType,
-    serviceCategory,
+    content_type: contentType,
+    service_category: serviceCategory,
     status: 'draft',
-    authorId: req.user.id,
-    publishedAt: null,
+    author_id: req.user.id,
+    published_at: null,
     views: 0,
     template: sanitizedTemplate,
     tags: tags || [],
-    relatedIds: relatedIds || [],
+    related_ids: relatedIds || [],
     seo: {
       title: seo?.title || title,
       description: seo?.description || excerpt,
       canonical: seo?.canonical || null
     },
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString()
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString()
   };
 
-  posts.push(newPost);
-  await writeData('posts', posts);
+  await writeData('posts', newPost);
 
   res.status(201).json(newPost);
 }));
@@ -258,19 +306,20 @@ router.put('/:id', authenticateToken, requireAuthorOrAdmin, validatePost, asyncH
   const { id } = req.params;
   const updateData = req.body;
 
-  const posts = await readData('posts');
-  const postIndex = posts.findIndex(post => post.id === id);
+  const { data: post, error } = await supabase
+    .from('posts')
+    .select('*')
+    .eq('id', id)
+    .single();
 
-  if (postIndex === -1) {
+  if (error || !post) {
     return res.status(404).json({ error: 'Post not found' });
   }
-
-  const post = posts[postIndex];
 
   // Check permissions
   if (req.user.role === 'author') {
     // Authors can only edit their own posts
-    if (post.authorId !== req.user.id) {
+    if (post.author_id !== req.user.id) {
       return res.status(403).json({ error: 'You can only edit your own posts' });
     }
     
@@ -282,7 +331,8 @@ router.put('/:id', authenticateToken, requireAuthorOrAdmin, validatePost, asyncH
 
   // Check if slug is unique (if changed)
   if (updateData.slug && updateData.slug !== post.slug) {
-    if (posts.some(p => p.slug === updateData.slug && p.id !== id)) {
+    const existingPost = await findOne('posts', 'slug', updateData.slug);
+    if (existingPost && existingPost.id !== id) {
       return res.status(400).json({ error: 'Slug already exists' });
     }
   }
@@ -316,20 +366,39 @@ router.put('/:id', authenticateToken, requireAuthorOrAdmin, validatePost, asyncH
   }
 
   // Update post
-  const updatedPost = {
-    ...post,
-    ...updateData,
+  const updateFields = {
+    title: updateData.title,
+    slug: updateData.slug || post.slug,
+    excerpt: updateData.excerpt,
+    banner: updateData.banner,
+    content_type: updateData.contentType,
+    service_category: updateData.serviceCategory,
     template: sanitizedTemplate,
+    tags: updateData.tags || [],
+    related_ids: updateData.relatedIds || [],
     seo: {
       title: updateData.seo?.title || updateData.title,
       description: updateData.seo?.description || updateData.excerpt,
       canonical: updateData.seo?.canonical || null
     },
-    updatedAt: new Date().toISOString()
+    updated_at: new Date().toISOString()
   };
 
-  posts[postIndex] = updatedPost;
-  await writeData('posts', posts);
+  const { error: updateError } = await supabase
+    .from('posts')
+    .update(updateFields)
+    .eq('id', id);
+
+  if (updateError) {
+    throw updateError;
+  }
+
+  // Get updated post
+  const { data: updatedPost } = await supabase
+    .from('posts')
+    .select('*')
+    .eq('id', id)
+    .single();
 
   res.json(updatedPost);
 }));
@@ -338,15 +407,24 @@ router.put('/:id', authenticateToken, requireAuthorOrAdmin, validatePost, asyncH
 router.delete('/:id', authenticateToken, requireAdmin, asyncHandler(async (req, res) => {
   const { id } = req.params;
 
-  const posts = await readData('posts');
-  const postIndex = posts.findIndex(post => post.id === id);
+  const { data: post, error: findError } = await supabase
+    .from('posts')
+    .select('*')
+    .eq('id', id)
+    .single();
 
-  if (postIndex === -1) {
+  if (findError || !post) {
     return res.status(404).json({ error: 'Post not found' });
   }
 
-  posts.splice(postIndex, 1);
-  await writeData('posts', posts);
+  const { error } = await supabase
+    .from('posts')
+    .delete()
+    .eq('id', id);
+
+  if (error) {
+    throw error;
+  }
 
   res.json({ success: true });
 }));
@@ -355,17 +433,18 @@ router.delete('/:id', authenticateToken, requireAdmin, asyncHandler(async (req, 
 router.post('/:id/submit', authenticateToken, requireAuthorOrAdmin, asyncHandler(async (req, res) => {
   const { id } = req.params;
 
-  const posts = await readData('posts');
-  const postIndex = posts.findIndex(post => post.id === id);
+  const { data: post, error } = await supabase
+    .from('posts')
+    .select('*')
+    .eq('id', id)
+    .single();
 
-  if (postIndex === -1) {
+  if (error || !post) {
     return res.status(404).json({ error: 'Post not found' });
   }
 
-  const post = posts[postIndex];
-
   // Check permissions
-  if (req.user.role === 'author' && post.authorId !== req.user.id) {
+  if (req.user.role === 'author' && post.author_id !== req.user.id) {
     return res.status(403).json({ error: 'You can only submit your own posts' });
   }
 
@@ -373,40 +452,68 @@ router.post('/:id/submit', authenticateToken, requireAuthorOrAdmin, asyncHandler
     return res.status(400).json({ error: 'Only draft or rejected posts can be submitted' });
   }
 
-  post.status = 'pending_approval';
-  post.updatedAt = new Date().toISOString();
+  const { error: updateError } = await supabase
+    .from('posts')
+    .update({ 
+      status: 'pending_approval',
+      updated_at: new Date().toISOString()
+    })
+    .eq('id', id);
 
-  posts[postIndex] = post;
-  await writeData('posts', posts);
+  if (updateError) {
+    throw updateError;
+  }
 
-  res.json(post);
+  // Get updated post
+  const { data: updatedPost } = await supabase
+    .from('posts')
+    .select('*')
+    .eq('id', id)
+    .single();
+
+  res.json(updatedPost);
 }));
 
 // Approve post (admin only)
 router.post('/:id/approve', authenticateToken, requireAdmin, asyncHandler(async (req, res) => {
   const { id } = req.params;
 
-  const posts = await readData('posts');
-  const postIndex = posts.findIndex(post => post.id === id);
+  const { data: post, error } = await supabase
+    .from('posts')
+    .select('*')
+    .eq('id', id)
+    .single();
 
-  if (postIndex === -1) {
+  if (error || !post) {
     return res.status(404).json({ error: 'Post not found' });
   }
-
-  const post = posts[postIndex];
 
   if (post.status !== 'pending_approval') {
     return res.status(400).json({ error: 'Only pending posts can be approved' });
   }
 
-  post.status = 'approved';
-  post.publishedAt = new Date().toISOString();
-  post.updatedAt = new Date().toISOString();
+  const now = new Date().toISOString();
+  const { error: updateError } = await supabase
+    .from('posts')
+    .update({ 
+      status: 'approved',
+      published_at: now,
+      updated_at: now
+    })
+    .eq('id', id);
 
-  posts[postIndex] = post;
-  await writeData('posts', posts);
+  if (updateError) {
+    throw updateError;
+  }
 
-  res.json(post);
+  // Get updated post
+  const { data: updatedPost } = await supabase
+    .from('posts')
+    .select('*')
+    .eq('id', id)
+    .single();
+
+  res.json(updatedPost);
 }));
 
 // Reject post (admin only)
@@ -414,54 +521,75 @@ router.post('/:id/reject', authenticateToken, requireAdmin, asyncHandler(async (
   const { id } = req.params;
   const { reason } = req.body;
 
-  const posts = await readData('posts');
-  const postIndex = posts.findIndex(post => post.id === id);
+  const { data: post, error } = await supabase
+    .from('posts')
+    .select('*')
+    .eq('id', id)
+    .single();
 
-  if (postIndex === -1) {
+  if (error || !post) {
     return res.status(404).json({ error: 'Post not found' });
   }
-
-  const post = posts[postIndex];
 
   if (post.status !== 'pending_approval') {
     return res.status(400).json({ error: 'Only pending posts can be rejected' });
   }
 
-  post.status = 'rejected';
-  post.rejectionReason = reason || 'No reason provided';
-  post.updatedAt = new Date().toISOString();
+  const { error: updateError } = await supabase
+    .from('posts')
+    .update({ 
+      status: 'rejected',
+      rejection_reason: reason || 'No reason provided',
+      updated_at: new Date().toISOString()
+    })
+    .eq('id', id);
 
-  posts[postIndex] = post;
-  await writeData('posts', posts);
+  if (updateError) {
+    throw updateError;
+  }
 
-  res.json(post);
+  // Get updated post
+  const { data: updatedPost } = await supabase
+    .from('posts')
+    .select('*')
+    .eq('id', id)
+    .single();
+
+  res.json(updatedPost);
 }));
 
 // Increment view count
 router.post('/:id/view', asyncHandler(async (req, res) => {
   const { id } = req.params;
 
-  const posts = await readData('posts');
-  const postIndex = posts.findIndex(post => post.id === id);
+  const { data: post, error } = await supabase
+    .from('posts')
+    .select('*')
+    .eq('id', id)
+    .single();
 
-  if (postIndex === -1) {
+  if (error || !post) {
     return res.status(404).json({ error: 'Post not found' });
   }
-
-  const post = posts[postIndex];
   
   // Only count views for approved posts
   if (post.status !== 'approved') {
     return res.status(400).json({ error: 'Can only track views for approved posts' });
   }
 
-  post.views = (post.views || 0) + 1;
-  post.updatedAt = new Date().toISOString();
+  const { error: updateError } = await supabase
+    .from('posts')
+    .update({ 
+      views: (post.views || 0) + 1,
+      updated_at: new Date().toISOString()
+    })
+    .eq('id', id);
 
-  posts[postIndex] = post;
-  await writeData('posts', posts);
+  if (updateError) {
+    throw updateError;
+  }
 
-  res.json({ views: post.views });
+  res.json({ views: (post.views || 0) + 1 });
 }));
 
 module.exports = router;

@@ -1,5 +1,5 @@
 const jwt = require('jsonwebtoken');
-const { readData } = require('../utils/dataStore');
+const { findOne } = require('../utils/dataStore');
 
 const authenticateToken = async (req, res, next) => {
   try {
@@ -10,17 +10,16 @@ const authenticateToken = async (req, res, next) => {
     }
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    const authors = await readData('authors');
-    const user = authors.find(author => author.id === decoded.userId && author.active);
+    const user = await findOne('authors', 'id', decoded.userId);
 
-    if (!user) {
+    if (!user || !user.active) {
       return res.status(401).json({ error: 'Invalid or expired token' });
     }
 
     req.user = {
       id: user.id,
       username: user.username,
-      fullName: user.fullName,
+      fullName: user.full_name,
       role: user.role
     };
 

@@ -1,7 +1,7 @@
 const express = require('express');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const { readData } = require('../utils/dataStore');
+const { findOne } = require('../utils/dataStore');
 const { validateLogin } = require('../middleware/validation');
 const { authenticateToken } = require('../middleware/auth');
 const { asyncHandler } = require('../middleware/errorHandler');
@@ -12,12 +12,9 @@ const router = express.Router();
 router.post('/login', validateLogin, asyncHandler(async (req, res) => {
   const { username, password } = req.body;
 
-  const authors = await readData('authors');
-  const user = authors.find(author => 
-    author.username === username && author.active
-  );
+  const user = await findOne('authors', 'username', username);
 
-  if (!user || !await bcrypt.compare(password, user.passwordHash)) {
+  if (!user || !user.active || !await bcrypt.compare(password, user.password_hash)) {
     return res.status(401).json({ error: 'Invalid credentials' });
   }
 
@@ -39,7 +36,7 @@ router.post('/login', validateLogin, asyncHandler(async (req, res) => {
     user: {
       id: user.id,
       username: user.username,
-      fullName: user.fullName,
+      fullName: user.full_name,
       role: user.role
     }
   });
