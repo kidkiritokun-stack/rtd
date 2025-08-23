@@ -39,12 +39,13 @@ router.post('/', validateContact, asyncHandler(async (req, res) => {
 
 // Submit challenge form
 router.post('/challenge', validateChallenge, asyncHandler(async (req, res) => {
-  const { name, email, company, challenge } = req.body;
+  const { name, email, phone, company, challenge } = req.body;
 
   const newSubmission = {
     id: uuidv4(),
     name,
     email,
+    phone: phone,
     company,
     message: challenge,
     submission_type: 'challenge_form',
