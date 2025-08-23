@@ -109,11 +109,13 @@ app.use('*', (req, res) => {
 // Error handling middleware
 app.use(errorHandler);
 
+const PORT = process.env.PORT || 3000;
+
 // Start server
 app.listen(PORT, () => {
   console.log(`🚀 Case Studies CMS running on port ${PORT}`);
-  console.log(`📱 Public site: http://localhost:${PORT}`);
-  console.log(`⚙️  Admin dashboard: http://localhost:${PORT}/admin`);
+  console.log(`📱 Public site: ${process.env.SITE_URL}`);
+  console.log(`⚙️  Admin dashboard: ${process.env.SITE_URL}/admin`);
   console.log(`🔧 Environment: ${process.env.NODE_ENV || 'development'}`);
 });
 
