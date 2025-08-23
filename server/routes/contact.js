@@ -183,6 +183,36 @@ router.get('/admin/newsletter', authenticateToken, requireAdmin, asyncHandler(as
   res.json(subscriptions);
 }));
 
+// Submit contact form with challenge data
+router.post('/contact', validateChallenge, asyncHandler(async (req, res) => {
+  const { name, email, company, challenge } = req.body;
+
+  const newSubmission = {
+    id: uuidv4(),
+    name,
+    email,
+    company,
+    message: challenge,
+    submission_type: 'challenge_form',
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString()
+  };
+
+  const { error } = await supabase
+    .from('contact_submissions')
+    .insert(newSubmission);
+
+  if (error) {
+    throw error;
+  }
+
+  res.status(201).json({
+    success: true,
+    message: 'Thank you for sharing your challenge. We\'ll analyze it and get back to you soon!'
+  });
+}));
+
+
 // Admin: Unsubscribe user from newsletter
 router.put('/admin/newsletter/:id/unsubscribe', authenticateToken, requireAdmin, asyncHandler(async (req, res) => {
   const { id } = req.params;
