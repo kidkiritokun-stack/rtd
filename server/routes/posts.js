@@ -1,7 +1,7 @@
 const express = require('express');
 const { writeData, updateData, deleteData, findOne, generateSlug, uuidv4, getSupabaseClient } = require('../utils/dataStore');
 const { validatePost, validatePostQuery } = require('../middleware/validation');
-const { authenticateToken, requireAdmin, requireAuthorOrAdmin } = require('../middleware/auth');
+const { authenticateToken, requireAdmin, requireAuthorOrAdmin, optionalAuth } = require('../middleware/auth');
 const { asyncHandler } = require('../middleware/errorHandler');
 const { sanitizeHTML, sanitizeCustomHTML, sanitizeCSS, sanitizeJS, validateContentSize } = require('../utils/sanitizer');
 
@@ -9,7 +9,7 @@ const router = express.Router();
 const supabase = getSupabaseClient();
 
 // Get posts (public and authenticated)
-router.get('/', validatePostQuery, asyncHandler(async (req, res) => {
+router.get('/', optionalAuth, validatePostQuery, asyncHandler(async (req, res) => {
   const { 
     offset = 0, 
     limit = 6, 
@@ -542,6 +542,55 @@ router.post('/:id/reject', authenticateToken, requireAdmin, asyncHandler(async (
       rejection_reason: reason || 'No reason provided',
       updated_at: new Date().toISOString()
     })
+    .eq('id', id);
+
+  if (updateError) {
+    throw updateError;
+  }
+
+  // Get updated post
+  const { data: updatedPost } = await supabase
+    .from('posts')
+    .select('*')
+    .eq('id', id)
+    .single();
+
+  res.json(updatedPost);
+}));
+
+// Toggle post approval status (admin only)
+router.post('/:id/toggle-approval', authenticateToken, requireAdmin, asyncHandler(async (req, res) => {
+  const { id } = req.params;
+
+  const { data: post, error } = await supabase
+    .from('posts')
+    .select('*')
+    .eq('id', id)
+    .single();
+
+  if (error || !post) {
+    return res.status(404).json({ error: 'Post not found' });
+  }
+
+  // Toggle between approved and draft status
+  const newStatus = post.status === 'approved' ? 'draft' : 'approved';
+  const now = new Date().toISOString();
+
+  const updateData = {
+    status: newStatus,
+    updated_at: now
+  };
+
+  // Set published_at when approving, clear it when moving to draft
+  if (newStatus === 'approved') {
+    updateData.published_at = post.published_at || now;
+  } else {
+    updateData.published_at = null;
+  }
+
+  const { error: updateError } = await supabase
+    .from('posts')
+    .update(updateData)
     .eq('id', id);
 
   if (updateError) {

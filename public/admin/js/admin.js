@@ -262,6 +262,49 @@ class AdminDashboard {
         }
     }
 
+    bindPostActionButtons() {
+        document.querySelectorAll('[data-action]').forEach(button => {
+            button.addEventListener('click', (e) => {
+                e.preventDefault();
+                const action = button.dataset.action;
+                const postId = button.dataset.postId;
+                const postSlug = button.dataset.postSlug;
+                const authorId = button.dataset.authorId;
+
+                switch (action) {
+                    case 'edit':
+                        this.editPost(postId);
+                        break;
+                    case 'approve':
+                        this.approvePost(postId);
+                        break;
+                    case 'reject':
+                        this.rejectPost(postId);
+                        break;
+                    case 'toggle-approval':
+                        this.toggleApproval(postId);
+                        break;
+                    case 'delete':
+                        this.deletePost(postId);
+                        break;
+                    case 'view':
+                        window.open(`/post/${postSlug}`, '_blank');
+                        break;
+                    case 'edit-author':
+                        this.editAuthor(authorId);
+                        break;
+                    case 'delete-author':
+                        this.deleteAuthor(authorId);
+                        break;
+                }
+            });
+        });
+    }
+
+    bindAuthorActionButtons() {
+        this.bindPostActionButtons(); // Reuse the same function
+    }
+
     async handleLogin(e) {
         e.preventDefault();
         
@@ -299,7 +342,14 @@ class AdminDashboard {
                     window.toast.success('Welcome back!');
                 }
             } else {
-                throw new Error(data.error || 'Login failed');
+                // Show detailed error messages
+                let errorMessage = 'Login failed. Please try again.';
+                if (data.details && data.details.length > 0) {
+                    errorMessage = data.details.map(err => err.msg).join(', ');
+                } else if (data.error) {
+                    errorMessage = data.error;
+                }
+                throw new Error(errorMessage);
             }
 
         } catch (error) {
@@ -307,7 +357,7 @@ class AdminDashboard {
             if (window.toast) {
                 window.toast.error(error.message || 'Login failed. Please try again.');
             } else {
-                alert('Login failed. Please try again.');
+                alert(error.message || 'Login failed. Please try again.');
             }
         } finally {
             // Reset button state
@@ -434,8 +484,8 @@ class AdminDashboard {
         emptyState.style.display = 'none';
 
         const rows = this.posts.map(post => {
-            const publishedDate = post.publishedAt ? 
-                new Date(post.publishedAt).toLocaleDateString() : 
+            const publishedDate = post.publishedAt ?
+                new Date(post.publishedAt).toLocaleDateString() :
                 new Date(post.updatedAt).toLocaleDateString();
 
             return `
@@ -446,7 +496,7 @@ class AdminDashboard {
                     </td>
                     <td>
                         <div class="table-author">
-                            ${post.author?.avatarUrl ? 
+                            ${post.author?.avatarUrl ?
                                 `<img src="${post.author.avatarUrl}" alt="${post.author.fullName}" class="table-avatar">` :
                                 `<div class="table-initials">${this.getInitials(post.author?.fullName || 'Unknown')}</div>`
                             }
@@ -461,19 +511,33 @@ class AdminDashboard {
                     <td>${publishedDate}</td>
                     <td>
                         <div class="table-actions">
-                            <button class="action-btn edit" onclick="adminDashboard.editPost('${post.id}')" title="Edit">
+                            <button class="action-btn edit" data-action="edit" data-post-id="${post.id}" title="Edit">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                     <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
                                     <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
                                 </svg>
                             </button>
-                            ${post.status === 'pending_approval' && this.currentUser.role === 'admin' ? `
-                                <button class="action-btn approve" onclick="adminDashboard.approvePost('${post.id}')" title="Approve">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                        <polyline points="20,6 9,17 4,12"></polyline>
-                                    </svg>
+                            ${this.currentUser.role === 'admin' ? `
+                                <button class="action-btn approval-toggle ${post.status === 'approved' ? 'approved' : 'unapproved'}"
+                                        data-action="toggle-approval"
+                                        data-post-id="${post.id}"
+                                        data-status="${post.status}"
+                                        title="${post.status === 'approved' ? 'Move to Draft' : 'Approve Post'}">
+                                    ${post.status === 'approved' ? `
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <polyline points="20,6 9,17 4,12"></polyline>
+                                        </svg>
+                                    ` : `
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <circle cx="12" cy="12" r="10"></circle>
+                                            <line x1="12" x2="12" y1="8" y2="12"></line>
+                                            <line x1="12" x2="12.01" y1="16" y2="16"></line>
+                                        </svg>
+                                    `}
                                 </button>
-                                <button class="action-btn reject" onclick="adminDashboard.rejectPost('${post.id}')" title="Reject">
+                            ` : ''}
+                            ${post.status === 'pending_approval' && this.currentUser.role === 'admin' ? `
+                                <button class="action-btn reject" data-action="reject" data-post-id="${post.id}" title="Reject">
                                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                         <line x1="18" x2="6" y1="6" y2="18"></line>
                                         <line x1="6" x2="18" y1="6" y2="18"></line>
@@ -481,14 +545,14 @@ class AdminDashboard {
                                 </button>
                             ` : ''}
                             ${this.currentUser.role === 'admin' ? `
-                                <button class="action-btn delete" onclick="adminDashboard.deletePost('${post.id}')" title="Delete">
+                                <button class="action-btn delete" data-action="delete" data-post-id="${post.id}" title="Delete">
                                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                         <polyline points="3,6 5,6 21,6"></polyline>
                                         <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
                                     </svg>
                                 </button>
                             ` : ''}
-                            <button class="action-btn view" onclick="window.open('/post/${post.slug}', '_blank')" title="View">
+                            <button class="action-btn view" data-action="view" data-post-slug="${post.slug}" title="View Live">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                     <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
                                     <circle cx="12" cy="12" r="3"></circle>
@@ -501,6 +565,9 @@ class AdminDashboard {
         }).join('');
 
         tableBody.innerHTML = rows;
+
+        // Add event listeners for action buttons
+        this.bindPostActionButtons();
     }
 
     async loadAuthors() {
@@ -540,7 +607,7 @@ class AdminDashboard {
                 <tr>
                     <td>
                         <div class="table-author">
-                            ${author.avatar_url ? 
+                            ${author.avatar_url ?
                                 `<img src="${author.avatar_url}" alt="${author.full_name}" class="table-avatar">` :
                                 `<div class="table-initials">${this.getInitials(author.full_name)}</div>`
                             }
@@ -557,14 +624,14 @@ class AdminDashboard {
                     <td>${createdDate}</td>
                     <td>
                         <div class="table-actions">
-                            <button class="action-btn edit" onclick="adminDashboard.editAuthor('${author.id}')" title="Edit">
+                            <button class="action-btn edit" data-action="edit-author" data-author-id="${author.id}" title="Edit">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                     <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
                                     <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
                                 </svg>
                             </button>
                             ${author.id !== this.currentUser.id ? `
-                                <button class="action-btn delete" onclick="adminDashboard.deleteAuthor('${author.id}')" title="Delete">
+                                <button class="action-btn delete" data-action="delete-author" data-author-id="${author.id}" title="Delete">
                                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                         <polyline points="3,6 5,6 21,6"></polyline>
                                         <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
@@ -578,6 +645,9 @@ class AdminDashboard {
         }).join('');
 
         tableBody.innerHTML = rows;
+
+        // Add event listeners for action buttons
+        this.bindAuthorActionButtons();
     }
 
     async loadInbox() {
@@ -973,7 +1043,14 @@ class AdminDashboard {
                 this.closePostEditor();
                 this.loadPosts();
             } else {
-                throw new Error(data.error || 'Failed to save post');
+                // Show detailed error messages
+                let errorMessage = 'Failed to save post';
+                if (data.details && data.details.length > 0) {
+                    errorMessage = data.details.map(err => err.msg).join(', ');
+                } else if (data.error) {
+                    errorMessage = data.error;
+                }
+                throw new Error(errorMessage);
             }
 
         } catch (error) {
@@ -1067,6 +1144,33 @@ class AdminDashboard {
             console.error('Error rejecting post:', error);
             if (window.toast) {
                 window.toast.error(error.message || 'Failed to reject post');
+            }
+        }
+    }
+
+    async toggleApproval(postId) {
+        if (!postId) return;
+
+        try {
+            const response = await fetch(`/api/posts/${postId}/toggle-approval`, {
+                method: 'POST'
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                const action = data.status === 'approved' ? 'approved' : 'moved to draft';
+                if (window.toast) {
+                    window.toast.success(`Post ${action} successfully!`);
+                }
+                this.loadPosts();
+            } else {
+                throw new Error(data.error || 'Failed to toggle approval status');
+            }
+        } catch (error) {
+            console.error('Error toggling approval:', error);
+            if (window.toast) {
+                window.toast.error(error.message || 'Failed to toggle approval status');
             }
         }
     }
@@ -1223,7 +1327,14 @@ class AdminDashboard {
                 this.closeAuthorEditor();
                 this.loadAuthors();
             } else {
-                throw new Error(data.error || 'Failed to save author');
+                // Show detailed error messages
+                let errorMessage = 'Failed to save author';
+                if (data.details && data.details.length > 0) {
+                    errorMessage = data.details.map(err => err.msg).join(', ');
+                } else if (data.error) {
+                    errorMessage = data.error;
+                }
+                throw new Error(errorMessage);
             }
 
         } catch (error) {
